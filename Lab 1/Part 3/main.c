@@ -1,6 +1,7 @@
 #include <stdio.h>
+#include "database.h"
 
 int main() {
-    printf("Hello, World!\n");
+    DB.run();
     return 0;
 }
