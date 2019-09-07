@@ -3,15 +3,15 @@
 
 #include "database.h"
 
-struct application {
+struct app {
     struct db DB;
     void(*run)(void);
     void(*add)(void);
-    void(*remove)(void);
+    void(*delete)(void);
     void(*change)(void);
     void(*count)(void);
 };
 
-extern const struct Application;
+extern const struct app App;
 
 #endif //PART_3_APPLICATION_H

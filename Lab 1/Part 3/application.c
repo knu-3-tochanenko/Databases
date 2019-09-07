@@ -1,4 +1,5 @@
 #include "application.h"
+#include <stdio.h>
 
 void add() {
 
@@ -12,18 +13,19 @@ void count() {
 
 }
 
-void remove() {
+void delete() {
 
 }
 
 void run() {
-
+    printf("Does it work?");
+    
 }
 
-struct application Application = {
+const struct app App = {
         .add = add,
         .change = change,
         .count = count,
-        .remove = remove,
+        .delete = delete,
         .run = run
 };

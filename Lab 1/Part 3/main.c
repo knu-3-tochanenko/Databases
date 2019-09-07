@@ -1,7 +1,7 @@
 #include <stdio.h>
-#include "database.h"
+#include "application.h"
 
 int main() {
-    DB.run();
+    App.run();
     return 0;
 }
