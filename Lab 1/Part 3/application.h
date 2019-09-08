@@ -5,10 +5,11 @@
 
 struct app {
     void(*run)(void);
-    void(*add)(void);
-    void(*delete)(void);
-    void(*change)(void);
-    void(*count)(void);
+    void(*add)(char*);
+    void(*delete)(char*);
+    void(*change)(char*);
+    void(*count)(char*);
+    void(*get)(char*);
 };
 
 extern const struct app App;

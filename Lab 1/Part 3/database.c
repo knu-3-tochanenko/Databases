@@ -70,7 +70,6 @@ bool add_vendor(struct Vendor *vendor) {
             .number_of_connected = 0,
             .is_deleted = false
     };
-
     if (get_vendor(vendor->SAP) == NULL) {
         fseek(vendor_file, 0L, SEEK_END);
         int pos = ftell(vendor_file);
@@ -119,6 +118,7 @@ void normalize_vendor(const char vendor_file_name[]) {
 
     qsort(vendor_array, number_of_vendors, sizeof(struct Vendor_Cell), compare_vendor);
     fclose(vendor_file);
+    //  TODO Add subelement count
     vendor_file = fopen(vendor_file_name, "wb");
     fwrite(vendor_array, sizeof(struct Vendor_Cell), number_of_vendors, vendor_file);
     fclose(vendor_file);
@@ -183,6 +183,28 @@ void normalize(
     init_fields(vendor_file_name, index_file_name, os_file_name);
 }
 
+void remove_os(char key[8]) {
+
+}
+
+void remove_vendor(char key[5]) {
+
+}
+
+void update_os(char key[8]) {
+
+}
+
+void update_vendor(char key[5]) {
+
+}
+
+void end() {
+    fclose(vendor_file);
+    fclose(os_file);
+    fclose(index_file);
+}
+
 const struct db DB = {
         // User functions
         .add_os = add_os,
@@ -196,7 +218,8 @@ const struct db DB = {
         .update_vendor = update_vendor,
         // Helping functions
         .init_files = init_fields,
-        .normalize = normalize
+        .normalize = normalize,
+        .end = end
 };
 
 // struct Vendor_Cell(*add_vendor)(struct Vendor vendor);

@@ -10,7 +10,7 @@ FILE *vendor_file;
 FILE *os_file;
 FILE *index_file;
 
-int number_of_entries = 0;
+int number_of_entries;
 struct Index indexes[MAX_NUMBER_OF_ENTRIES];
 
 struct db {
@@ -31,6 +31,7 @@ struct db {
     );
 
     void (*normalize)();
+    void (*end)();
 };
 
 extern const struct db DB;
