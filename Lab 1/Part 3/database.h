@@ -4,11 +4,14 @@
 #include <stdio.h>
 #include "tables.h"
 
+#define MAX_NUMBER_OF_ENTRIES 30
+
 FILE *vendor_file;
 FILE *os_file;
 FILE *index_file;
 
-struct Vendor_Cell *add_vendor(struct Vendor *vendor);
+int number_of_entries = 0;
+struct Index indexes[MAX_NUMBER_OF_ENTRIES];
 
 struct db {
     struct Vendor_Cell *(*add_vendor)(struct Vendor *vendor);
@@ -28,6 +31,7 @@ struct db {
             const char os_file_name[],
             const char index_file_name[]
     );
+    void (*normalize)();
 };
 
 extern const struct db DB;
