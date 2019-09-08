@@ -9,8 +9,18 @@ void init_fields(
         const char os_file_name[]
 ) {
     vendor_file = fopen(vendor_file_name, "ab+");
-    index_file = fopen(index_file_name, "a+");
-    os_file = fopen(os_file_name, "a+");
+    index_file = fopen(index_file_name, "ab+");
+    os_file = fopen(os_file_name, "ab+");
+
+    //  Read all indexes to memory
+    fseek(index_file, 0L, SEEK_END);
+    number_of_entries = ftell(index_file) / sizeof(struct Index);
+    fseek(index_file, 0L, SEEK_SET);
+    struct Index* sub;
+    for (int i = 0; i < number_of_entries; i++) {
+        fread(&sub, sizeof(sub), 1, index_file);
+        indexes[i] = *sub;
+    }
 }
 
 struct Vendor_Cell *add_vendor(struct Vendor *vendor) {
@@ -23,12 +33,19 @@ struct Vendor_Cell *add_vendor(struct Vendor *vendor) {
     fseek(vendor_file, 0L, SEEK_END);
     int pos = ftell(vendor_file);
     fwrite(&newVendor, sizeof(newVendor), 1, vendor_file);
-    fprintf(index_file, "%s %d", newVendor.vendor->SAP, pos);
+    fwrite(&newVendor.vendor->SAP, sizeof(newVendor.vendor->SAP), 1, index_file);
+    fwrite(&pos, sizeof(pos), 1, index_file);
     indexes[number_of_entries] = (struct Index){
-            .SAP = newVendor.vendor->SAP,
+            .SAP = *newVendor.vendor->SAP,
             .index = pos
     };
     number_of_entries++;
+}
+
+static int compare_vendor(const void* a, const void* b) {
+    struct Vendor_Cell* a_vendor = (struct Vendor_Cell*)a;
+    struct Vendor_Cell* b_vendor = (struct Vendor_Cell*)b;
+    return strcmp(a_vendor->vendor->SAP, b_vendor->vendor->SAP);
 }
 
 void normalize_vendor() {
@@ -63,7 +80,7 @@ void normalize_os(const char os_file_name[]) {
     qsort(os_array, number_of_os, sizeof(struct OS_Cell), compare_os);
 
     fclose(os_file);
-    os_file = fopen(os_file_name, "w");
+    os_file = fopen(os_file_name, "wb");
     //  TODO Check if it writes all elements
     fwrite(os_array, sizeof(struct OS_Cell), number_of_os, os_file);
     fclose(os_file);
@@ -71,9 +88,11 @@ void normalize_os(const char os_file_name[]) {
 
 void normalize_index(const char index_file_name[]) {
     fclose(index_file);
-    index_file = fopen(index_file_name, "w");
-    for (int i = 0; i < number_of_entries; i++)
-        fprintf(index_file, "%s %d", indexes[i].SAP, indexes[i].index);
+    index_file = fopen(index_file_name, "wb");
+    for (int i = 0; i < number_of_entries; i++) {
+        fwrite(indexes[i].SAP, sizeof(indexes[i].SAP), 1, index_file);
+        fwrite(&indexes[i].index, sizeof(indexes[i].index), 1, index_file);
+    }
     fclose(index_file);
 }
 
