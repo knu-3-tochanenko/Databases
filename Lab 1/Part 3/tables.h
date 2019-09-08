@@ -20,8 +20,8 @@ struct OS {
 };
 
 struct Vendor_Cell {
-    struct Vendor vendor;
-    int connected;
+    struct Vendor* vendor;
+    int connected_to;
     int number_of_connected;
     bool is_deleted;
 };
@@ -29,6 +29,11 @@ struct Vendor_Cell {
 struct OS_Cell {
     struct OS os;
     bool is_deleted;
+};
+
+struct Index {
+    char SAP[5];
+    int index;
 };
 
 #endif //PART_3_TABLES_H
