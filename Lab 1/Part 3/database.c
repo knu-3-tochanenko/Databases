@@ -16,48 +16,120 @@ void init_fields(
     fseek(index_file, 0L, SEEK_END);
     number_of_entries = ftell(index_file) / sizeof(struct Index);
     fseek(index_file, 0L, SEEK_SET);
-    struct Index* sub;
+    struct Index *sub;
     for (int i = 0; i < number_of_entries; i++) {
         fread(&sub, sizeof(sub), 1, index_file);
         indexes[i] = *sub;
     }
 }
 
-struct Vendor_Cell *add_vendor(struct Vendor *vendor) {
+struct Vendor* get_vendor(char key[5]) {
+    struct Vendor* found = NULL;
+    for (int i = 0; i < number_of_entries; i++) {
+        if (strcmp(indexes[i].SAP, key) == 0) {
+            fseek(vendor_file, indexes[i].index, SEEK_SET);
+            struct Vendor_Cell* vendor_cell;
+            fread(&vendor_cell, sizeof(struct Vendor_Cell), 1, vendor_file);
+            return vendor_cell->vendor;
+        }
+    }
+    return NULL;
+}
+
+struct OS* get_os(char key[8]) {
+    fseek(os_file, 0L, SEEK_END);
+    int number_of_os = ftell(os_file) / sizeof(struct OS_Cell);
+    fseek(os_file, 0L, SEEK_SET);
+
+    struct OS_Cell* os_cell;
+    for (int i = 0; i < number_of_os; i++) {
+        fread(&os_cell, sizeof(struct OS_Cell), 1, os_file);
+        if (strcmp(os_cell->os->baseband_version, key) == 0)
+            return &os_cell->os;
+    }
+    return NULL;
+}
+
+struct OS* get_all_os() {
+    fseek(os_file, 0L, SEEK_END);
+    int number_of_os = ftell(os_file) / sizeof(struct OS_Cell);
+    fseek(os_file, 0L, SEEK_SET);
+
+    struct OS_Cell os_array[number_of_os];
+    fread(&os_array, sizeof(struct OS_Cell), number_of_os, os_file);
+    struct OS array[number_of_os];
+    for (int i = 0; i < number_of_os; i++)
+        array[i] = *os_array[i].os;
+    return array;
+}
+
+bool add_vendor(struct Vendor *vendor) {
     const struct Vendor_Cell newVendor = {
             .vendor = vendor,
             .connected_to = 0,
             .number_of_connected = 0,
             .is_deleted = false
     };
-    fseek(vendor_file, 0L, SEEK_END);
-    int pos = ftell(vendor_file);
-    fwrite(&newVendor, sizeof(newVendor), 1, vendor_file);
-    fwrite(&newVendor.vendor->SAP, sizeof(newVendor.vendor->SAP), 1, index_file);
-    fwrite(&pos, sizeof(pos), 1, index_file);
-    indexes[number_of_entries] = (struct Index){
-            .SAP = *newVendor.vendor->SAP,
-            .index = pos
-    };
-    number_of_entries++;
+
+    if (get_vendor(vendor->SAP) == NULL) {
+        fseek(vendor_file, 0L, SEEK_END);
+        int pos = ftell(vendor_file);
+        fwrite(&newVendor, sizeof(newVendor), 1, vendor_file);
+        fwrite(&newVendor.vendor->SAP, sizeof(newVendor.vendor->SAP), 1, index_file);
+        fwrite(&pos, sizeof(pos), 1, index_file);
+        indexes[number_of_entries] = (struct Index) {
+                .SAP = *newVendor.vendor->SAP,
+                .index = pos
+        };
+        number_of_entries++;
+        return true;
+    }
+    return false;
 }
 
-static int compare_vendor(const void* a, const void* b) {
-    struct Vendor_Cell* a_vendor = (struct Vendor_Cell*)a;
-    struct Vendor_Cell* b_vendor = (struct Vendor_Cell*)b;
+bool add_os(struct OS *os) {
+    const struct OS_Cell newOS = {
+            .os = os,
+            .is_deleted = 0
+    };
+
+    if (get_os(os->baseband_version) == NULL) {
+        fseek(os_file, 0L, SEEK_END);
+        int pos = ftell(os_file);
+        fwrite(&newOS, sizeof(struct OS_Cell), 1, os_file);
+        return true;
+    }
+    return false;
+}
+
+static int compare_vendor(const void *a, const void *b) {
+    struct Vendor_Cell *a_vendor = (struct Vendor_Cell *) a;
+    struct Vendor_Cell *b_vendor = (struct Vendor_Cell *) b;
     return strcmp(a_vendor->vendor->SAP, b_vendor->vendor->SAP);
 }
 
-void normalize_vendor() {
+void normalize_vendor(const char vendor_file_name[]) {
+    fseek(vendor_file, 0L, SEEK_END);
+    int number_of_vendors = ftell(vendor_file) / sizeof(struct Vendor_Cell);
+    fseek(vendor_file, 0, SEEK_SET);
 
+    struct Vendor_Cell vendor_array[number_of_vendors];
+
+    fread(vendor_array, sizeof(struct Vendor_Cell), number_of_vendors, vendor_file);
+
+    qsort(vendor_array, number_of_vendors, sizeof(struct Vendor_Cell), compare_vendor);
+    fclose(vendor_file);
+    vendor_file = fopen(vendor_file_name, "wb");
+    fwrite(vendor_array, sizeof(struct Vendor_Cell), number_of_vendors, vendor_file);
+    fclose(vendor_file);
 }
 
-static int compare_os(const void* a, const void* b) {
-    struct OS_Cell* a_os = (struct OS_Cell*)a;
-    struct OS_Cell* b_os = (struct OS_Cell*)b;
-    int key_SAP = strcmp(a_os->os.vendor_SAP, b_os->os.vendor_SAP);
+static int compare_os(const void *a, const void *b) {
+    struct OS_Cell *a_os = (struct OS_Cell *) a;
+    struct OS_Cell *b_os = (struct OS_Cell *) b;
+    int key_SAP = strcmp(a_os->os->vendor_SAP, b_os->os->vendor_SAP);
     if (key_SAP == 0)
-        return strcmp(a_os->os.baseband_version, b_os->os.baseband_version);
+        return strcmp(a_os->os->baseband_version, b_os->os->baseband_version);
     else
         return key_SAP;
 }
@@ -70,8 +142,9 @@ void normalize_os(const char os_file_name[]) {
     struct OS_Cell os_array[number_of_os];
 
     //  Read all OSes
+    // TODO Change reading method
     for (int i = 0; i < number_of_os; i++) {
-        struct OS_Cell* os_cell;
+        struct OS_Cell *os_cell;
         fread(&os_cell, sizeof(os_cell), 1, os_file);
         os_array[i] = *os_cell;
     }

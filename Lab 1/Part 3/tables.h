@@ -27,7 +27,7 @@ struct Vendor_Cell {
 };
 
 struct OS_Cell {
-    struct OS os;
+    struct OS* os;
     bool is_deleted;
 };
 
