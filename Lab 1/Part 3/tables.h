@@ -6,29 +6,29 @@
 struct Vendor {
     char SAP[5];  // Key
     char name[32];
-    char country_code[3];
+    char countryCode[3];
 };
 
-struct OS {
-    char baseband_version[8]; // Key
-    int build_number;
-    int android_version;
-    int security_patch;
+struct Os {
+    char basebandVersion[8]; // Key
+    int buildNumber;
+    int androidVersion;
+    int securityPatch;
     char name[32];
-    int build_date;
-    char vendor_SAP[5];   // Key to it's vendor
+    int buildDate;
+    char vendorSAP[5];   // Key to it's vendor
 };
 
-struct Vendor_Cell {
+struct VendorCell {
     struct Vendor* vendor;
-    int connected_to;
-    int number_of_connected;
-    bool is_deleted;
+    int connectedTo;
+    int numberOfConnected;
+    bool isDeleted;
 };
 
-struct OS_Cell {
-    struct OS* os;
-    bool is_deleted;
+struct OsCell {
+    struct Os* os;
+    bool isDeleted;
 };
 
 struct Index {

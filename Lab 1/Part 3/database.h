@@ -6,28 +6,28 @@
 
 #define MAX_NUMBER_OF_ENTRIES 30
 
-FILE *vendor_file;
-FILE *os_file;
-FILE *index_file;
+FILE *vendorFile;
+FILE *osFile;
+FILE *indexFile;
 
-int number_of_entries;
+unsigned long long numberOfEntries;
 struct Index indexes[MAX_NUMBER_OF_ENTRIES];
 
 struct db {
-    bool (*add_vendor)(struct Vendor *vendor);
-    bool (*add_os)(struct OS os, char);
-    struct Vendor *(*get_vendor)(char key[5]);   //  Key - SAP code
-    struct OS *(*get_os)(char key[8]);           //  Key - baseband version
-    struct OS *(*get_all_os)(char key[5]);       //  Key - linked vendor's SAP
-    void (*remove_vendor)(char key[5]);          //  Key - SAP code
-    void (*remove_os)(char key[8]);              //  Key - baseband version
-    void (*update_vendor)(char key[5]);          //  Key - SAP code
-    void (*update_os)(char key[8]);              //  Key - baseband version
+    bool (*addVendor)(struct Vendor *vendor);
+    bool (*addOs)(struct Os os, char);
+    struct Vendor *(*getVendor)(char key[5]);   //  Key - SAP code
+    struct Os *(*getOs)(char key[8]);           //  Key - baseband version
+    struct Os *(*getAllOs)(char key[5]);       //  Key - linked vendor's SAP
+    void (*removeVendor)(char key[5]);          //  Key - SAP code
+    void (*removeOs)(char key[8]);              //  Key - baseband version
+    void (*updateVendor)(char key[5]);          //  Key - SAP code
+    void (*updateOs)(char key[8]);              //  Key - baseband version
 
-    void (*init_files)(
-            const char vendor_file_name[],
-            const char os_file_name[],
-            const char index_file_name[]
+    void (*initFiles)(
+            const char vendorFileName[],
+            const char osFileName[],
+            const char indexFileName[]
     );
 
     void (*normalize)();

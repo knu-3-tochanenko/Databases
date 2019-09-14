@@ -17,11 +17,11 @@ void add(char * tag) {
 
         struct Vendor vendor;
         strcpy(vendor.name, name);
-        strcpy(vendor.country_code, country_code);
+        strcpy(vendor.countryCode, country_code);
         strcpy(vendor.SAP, sap);
         setbuf(stdout, 0);printf("\nVENDOR->SAP: %s", vendor.SAP);
         setbuf(stdout, 0);printf("\nSAP: %s", sap);
-        DB.add_vendor(&vendor);
+        DB.addVendor(&vendor);
     }
     else {
         setbuf(stdout, 0);printf("In Add function : else");
@@ -47,8 +47,8 @@ void get(char * tag) {
         fgets(word, sizeof(word), stdin);
         char * words = strtok(word, " \n");
         char * sap = words;
-        struct Vendor* vendor = DB.get_vendor(sap);
-        setbuf(stdout, 0);printf("Name: %s\nCountry Code: %s", vendor->name, vendor->country_code);
+        struct Vendor* vendor = DB.getVendor(sap);
+        setbuf(stdout, 0);printf("Name: %s\nCountry Code: %s", vendor->name, vendor->countryCode);
     }
     else {
         setbuf(stdout, 0);printf("In get function : else");
@@ -56,8 +56,8 @@ void get(char * tag) {
 }
 
 void run() {
-    DB.init_files("vendor.fl", "os.fl", "index.ind");
-    number_of_entries = 0;
+    DB.initFiles("vendor.fl", "os.fl", "index.ind");
+    numberOfEntries = 0;
     char word[256];
     char *commands;
     while (true) {
