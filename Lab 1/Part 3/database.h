@@ -10,19 +10,19 @@ FILE *vendorFile;
 FILE *osFile;
 FILE *indexFile;
 
-unsigned long long numberOfEntries;
+long long numberOfEntries;
 struct Index indexes[MAX_NUMBER_OF_ENTRIES];
 
 struct db {
-    bool (*addVendor)(struct Vendor *vendor);
-    bool (*addOs)(struct Os os, char);
-    void (*getVendor)(char key[5], struct Vendor* vendor);   //  Key - SAP code
-    void (*getOs)(char key[8], struct Os* os);           //  Key - baseband version
-    int (*getAllOs)(char key[5], struct Os os[]);       //  Key - linked vendor's SAP
-    void (*removeVendor)(char key[5]);          //  Key - SAP code
-    void (*removeOs)(char key[8]);              //  Key - baseband version
-    void (*updateVendor)(char key[5]);          //  Key - SAP code
-    void (*updateOs)(char key[8]);              //  Key - baseband version
+    bool (*addVendor)(struct Vendor vendor);
+    bool (*addOs)(struct Os os);
+    struct Vendor (*getVendor)(char key[6]);   //  Key - SAP code
+    void (*getOs)(char key[9], struct Os* os);           //  Key - baseband version
+    int (*getAllOs)(char key[6], struct Os os[]);       //  Key - linked vendor's SAP
+    void (*removeVendor)(char key[6]);          //  Key - SAP code
+    void (*removeOs)(char key[9]);              //  Key - baseband version
+    void (*updateVendor)(char key[6]);          //  Key - SAP code
+    void (*updateOs)(char key[9]);              //  Key - baseband version
 
     void (*initFiles)(
             const char vendorFileName[],
