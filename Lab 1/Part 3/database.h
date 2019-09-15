@@ -16,9 +16,9 @@ struct Index indexes[MAX_NUMBER_OF_ENTRIES];
 struct db {
     bool (*addVendor)(struct Vendor *vendor);
     bool (*addOs)(struct Os os, char);
-    struct Vendor *(*getVendor)(char key[5]);   //  Key - SAP code
-    struct Os *(*getOs)(char key[8]);           //  Key - baseband version
-    struct Os *(*getAllOs)(char key[5]);       //  Key - linked vendor's SAP
+    void (*getVendor)(char key[5], struct Vendor* vendor);   //  Key - SAP code
+    void (*getOs)(char key[8], struct Os* os);           //  Key - baseband version
+    int (*getAllOs)(char key[5], struct Os os[]);       //  Key - linked vendor's SAP
     void (*removeVendor)(char key[5]);          //  Key - SAP code
     void (*removeOs)(char key[8]);              //  Key - baseband version
     void (*updateVendor)(char key[5]);          //  Key - SAP code

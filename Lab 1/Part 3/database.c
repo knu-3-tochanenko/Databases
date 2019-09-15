@@ -16,6 +16,10 @@ struct Index readIndex(FILE *file) {
     return elem;
 }
 
+void writeIndex(FILE *file, struct Index index) {
+    fwrite(&index, sizeof(struct Index), 1, file);
+}
+
 struct Vendor readVendor(FILE *file) {
     char SAP[6];
     char name[33];
@@ -31,6 +35,10 @@ struct Vendor readVendor(FILE *file) {
     strncpy(vendor.countryCode, countryCode, 4);
 
     return vendor;
+}
+
+void writeVendor(FILE* file, struct Vendor vendor) {
+    fwrite(&vendor, sizeof(struct Vendor), 1, file);
 }
 
 struct VendorCell readVendorCell(FILE *file) {
@@ -52,7 +60,12 @@ struct VendorCell readVendorCell(FILE *file) {
     return vendorCell;
 }
 
-struct Os readOs(FILE* file) {
+void writeVendorCell(FILE* file, struct VendorCell vendorCell) {
+//    writeVendor(file, vendorCell.vendor);
+    fwrite(&vendorCell, sizeof(struct VendorCell), 1, file);
+}
+
+struct Os readOs(FILE *file) {
     char basebandVersion[9]; // Key
     int buildNumber;
     int androidVersion;
@@ -64,7 +77,7 @@ struct Os readOs(FILE* file) {
     fread(&buildNumber, sizeof(int), 1, file);
     fread(&androidVersion, sizeof(int), 1, file);
     fread(name, sizeof(char), 33, file);
-    fread(&buildDate, sizeof(int), 1,file);
+    fread(&buildDate, sizeof(int), 1, file);
     fread(vendorSAP, sizeof(char), 6, file);
 
     struct Os os;
@@ -78,7 +91,11 @@ struct Os readOs(FILE* file) {
     return os;
 }
 
-struct OsCell readOsCell(FILE* file) {
+void writeOs(FILE* file, struct Os os) {
+    fwrite(&os, sizeof(struct Os), 1, file);
+}
+
+struct OsCell readOsCell(FILE *file) {
     struct Os os = readOs(file);
     bool isDeleted;
     fread(&isDeleted, sizeof(bool), 1, file);
@@ -88,6 +105,22 @@ struct OsCell readOsCell(FILE* file) {
     osCell.isDeleted = isDeleted;
 
     return osCell;
+}
+
+void writeOsCell(FILE* file, struct OsCell osCell) {
+    fwrite(&osCell, sizeof(struct OsCell), 1, file);
+}
+
+void fileEnd(FILE *file) {
+    fseek(file, 0L, SEEK_END);
+}
+
+void fileStart(FILE *file) {
+    fseek(file, 0L, SEEK_SET);
+}
+
+void fileSet(FILE *file, long pos) {
+    fseek(file, pos, SEEK_SET);
 }
 
 void initFields(
@@ -100,112 +133,92 @@ void initFields(
     osFile = fopen(osFileName, "ab+");
 
     //  Read all indexes to memory
-    fseek(indexFile, 0L, SEEK_END);
+    fileEnd(indexFile);
     numberOfEntries = ftell(indexFile) / (sizeof(char) * 5 + sizeof(unsigned long long));
-    fseek(indexFile, 0L, SEEK_SET);
+    fileStart(indexFile);
     struct Index sub;
-    for (unsigned long long i = 0; i < numberOfEntries; i++) {
-        fread(sub, sizeof(sub), 1, indexFile);
-        indexes[i] = *sub;
-    }
+    for (unsigned long long i = 0; i < numberOfEntries; i++)
+        indexes[i] = readIndex(indexFile);
 }
 
-struct Vendor *getVendor(char *key) {
-    struct Vendor *found = NULL;
+void getVendor(char *key, struct Vendor *vendor) {
+    vendor = NULL;
     for (int i = 0; i < numberOfEntries; i++) {
         if (strcmp(indexes[i].SAP, key) == 0) {
             fseek(vendorFile, indexes[i].index, SEEK_SET);
-            // init fields
-            struct VendorCell vendorCell;
-            struct Vendor *vendor;
-            unsigned long long connectedTo;
-            int numberOfConnected;
-            bool isDeleted;
-            // Read all fields from file
-            fread(vendor, sizeof(struct Vendor), 1, vendorFile);
-            fread(&connectedTo, sizeof(unsigned long long), 1, vendorFile);
-            fread(&numberOfConnected, sizeof(int), 1, vendorFile);
-            fread(&isDeleted, sizeof(bool), 1, vendorFile);
-            // Init VendorCell object
-            vendorCell.vendor = vendor;
-            vendorCell.numberOfConnected = numberOfConnected;
-            vendorCell.connectedTo = connectedTo;
-            vendorCell.isDeleted = isDeleted;
-
-            return vendorCell.vendor;
+            struct VendorCell vendorCell = readVendorCell(vendorFile);
+            vendor = &(vendorCell.vendor);
+            return;
         }
     }
-    return NULL;
 }
 
-struct Os *getOs(char *key) {
-    fseek(osFile, 0L, SEEK_END);
-    unsigned long long numberOfOs = ftell(osFile) / (sizeof(struct Os) + sizeof(bool));
-    fseek(osFile, 0L, SEEK_SET);
+void getOs(char *key, struct Os *os) {
+    os = NULL; // Default value if not found
+    fileEnd(osFile);
+    unsigned long long numberOfOs = ftell(osFile) /
+                                    (sizeof(struct Os) + sizeof(bool));
+    fileStart(osFile);
 
     struct OsCell osCell;
-    struct Os *os;
-    bool isDeleted;
     for (unsigned long long i = 0; i < numberOfOs; i++) {
-        fread(os, sizeof(struct Os), 1, osFile);
-        fread(&isDeleted, sizeof(bool), 1, osFile);
-        if (strcmp(osCell.os->basebandVersion, key) == 0)
-            return osCell.os;
+        osCell = readOsCell(osFile);
+        if (strcmp(osCell.os.basebandVersion, key) == 0) {
+            os = &osCell.os;
+            return;
+        }
     }
-    return NULL;
 }
 
-struct Os *getAllOs() {
-    fseek(osFile, 0L, SEEK_END);
-    unsigned long long numberOfOs = ftell(osFile) / (sizeof(struct Os) + sizeof(bool));
-    fseek(osFile, 0L, SEEK_SET);
+int getAllOs(struct Os os[]) {
+    fileEnd(osFile);
+    unsigned long long numberOfOs = ftell(osFile) /
+                                    (sizeof(struct Os) + sizeof(bool));
+    fileStart(osFile);
 
-    struct Os array[numberOfOs];
-    struct Os *os;
-    bool isDeleted;
-    for (unsigned long long i = 0; i < numberOfOs; i++) {
-        fread(os, sizeof(struct Os), 1, osFile);
-        fread(&isDeleted, sizeof(bool), 1, osFile);
-        array[i] = *os;
-    }
-    return array;
+    os = malloc(numberOfOs * sizeof(struct Os));
+
+    for (unsigned long long i = 0; i < numberOfOs; i++)
+        os[i] = readOsCell(osFile).os;
+    return numberOfOs;
 }
 
-bool addVendor(struct Vendor *vendor) {
+bool addVendor(struct Vendor vendor) {
     const struct VendorCell newVendor = {
             .vendor = vendor,
             .connectedTo = 0,
             .numberOfConnected = 0,
             .isDeleted = false
     };
-    if (getVendor(vendor->SAP) == NULL) {
-        fseek(vendorFile, 0L, SEEK_END);
+    struct Vendor *vendorFound = NULL;
+    getVendor(vendor.SAP, vendorFound);
+    if (vendorFound == NULL) {
+        fileEnd(vendorFile);
         unsigned long long pos = ftell(vendorFile);
-        fwrite(newVendor.vendor, sizeof(struct Vendor), 1, vendorFile);
-        fwrite(vendor->SAP, sizeof(vendor->SAP), 1, indexFile);
-        fwrite(&pos, sizeof(unsigned long long), 1, indexFile);
-        indexes[numberOfEntries] = (struct Index) {
-                .SAP = *newVendor.vendor->SAP,
-                .index = pos
-        };
+        writeVendorCell(vendorFile, newVendor);
+
+        struct Index index;
+        index.index = pos;
+        strncpy(index.SAP, vendor.SAP, 6);
+
+        writeIndex(indexFile, index);
+        indexes[numberOfEntries] = index;
         numberOfEntries++;
         return true;
     }
     return false;
 }
 
-bool addOs(struct Os *os) {
+bool addOs(struct Os os) {
     const struct OsCell newOs = {
             .os = os,
             .isDeleted = 0
     };
-
-    if (getOs(os->basebandVersion) == NULL) {
-        fseek(osFile, 0L, SEEK_END);
-        // idk what this is supposet to do
-        // int pos = ftell(osFile);
-        fwrite(os, sizeof(struct Os), 1, osFile);
-        fwrite(&newOs.isDeleted, sizeof(bool), 1, osFile);
+    struct Os* osRes = NULL;
+    getOs(os.basebandVersion, osRes);
+    if (osRes == NULL) {
+        fileEnd(osFile);
+        writeOsCell(osFile, newOs);
         return true;
     }
     return false;
@@ -214,7 +227,7 @@ bool addOs(struct Os *os) {
 static int compareVendor(const void *a, const void *b) {
     struct VendorCell *aVendor = (struct VendorCell *) a;
     struct VendorCell *bVendor = (struct VendorCell *) b;
-    return strcmp(aVendor->vendor->SAP, bVendor->vendor->SAP);
+    return strcmp(aVendor->vendor.SAP, bVendor->vendor.SAP);
 }
 
 void normalizeVendor(const char *vendorFileName) {
@@ -225,26 +238,15 @@ void normalizeVendor(const char *vendorFileName) {
     fseek(vendorFile, 0, SEEK_SET);
 
     struct VendorCell vendorArray[numberOfVendors];
-    struct Vendor vendor;
-    unsigned long long connectedTo;
-    int numberOfConnected;
-    bool isDeleted;
+    struct VendorCell vendorCell;
     int totalVendors = 0;
 
     for (unsigned long long i = 0; i < numberOfVendors; i++) {
-        fread(&vendor, sizeof(struct Vendor), 1, vendorFile);
-        fread(&connectedTo, sizeof(unsigned long long), 1, vendorFile);
-        fread(&numberOfConnected, sizeof(int), 1, vendorFile);
-        fread(&isDeleted, sizeof(bool), 1, vendorFile);
+        vendorCell = readVendorCell(vendorFile);
 
         // Write vendor if still used
-        if (!isDeleted) {
-            vendorArray[totalVendors] = (struct VendorCell) {
-                    .vendor = &vendor,
-                    .numberOfConnected = numberOfConnected,
-                    .connectedTo = connectedTo,
-                    .isDeleted = isDeleted
-            };
+        if (!vendorCell.isDeleted) {
+            vendorArray[totalVendors] = vendorCell;
             totalVendors++;
         }
     }
@@ -255,7 +257,7 @@ void normalizeVendor(const char *vendorFileName) {
     // Update index table
     numberOfEntries = totalVendors;
     for (unsigned long long i = 0; i < totalVendors; i++) {
-        strncpy(indexes[i].SAP, vendorArray[i].vendor->SAP, 5);
+        strncpy(indexes[i].SAP, vendorArray[i].vendor.SAP, 5);
         indexes[i].index = i * (sizeof(struct Vendor) + sizeof(unsigned long long) + sizeof(int) + sizeof(bool));
     }
 
@@ -271,6 +273,7 @@ void normalizeVendor(const char *vendorFileName) {
     int currentOs = 0;
     int osPosition = 0;
     int compResult;
+    // TODO HERE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     while (currentOs < numberOfOs) {
         osPosition = ftell(osFile);
         fread(&os, sizeof(struct Os), 1, osFile);
