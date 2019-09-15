@@ -3,14 +3,91 @@
 #include <stdlib.h>
 #include <string.h>
 
-struct Index readIndex(FILE* file) {
-    char SAP[5];
+struct Index readIndex(FILE *file) {
+    char SAP[6];
     unsigned long long index;
-    fread(SAP, sizeof(char) * 5, 1, file);
+
+    fread(SAP, sizeof(char), 6, file);
     fread(&index, sizeof(unsigned long long), 1, file);
+
     struct Index elem;
     elem.index = index;
-    //strn
+    strncpy(elem.SAP, SAP, 6);
+    return elem;
+}
+
+struct Vendor readVendor(FILE *file) {
+    char SAP[6];
+    char name[33];
+    char countryCode[4];
+
+    fread(SAP, sizeof(char), 6, file);
+    fread(name, sizeof(char), 33, file);
+    fread(countryCode, sizeof(char), 4, file);
+
+    struct Vendor vendor;
+    strncpy(vendor.SAP, SAP, 6);
+    strncpy(vendor.name, name, 33);
+    strncpy(vendor.countryCode, countryCode, 4);
+
+    return vendor;
+}
+
+struct VendorCell readVendorCell(FILE *file) {
+    struct Vendor vendor = readVendor(file);
+    unsigned long long connectedTo;
+    int numberOfConnected;
+    bool isDeleted;
+
+    fread(&connectedTo, sizeof(unsigned long long), 1, file);
+    fread(&numberOfConnected, sizeof(int), 1, file);
+    fread(&isDeleted, sizeof(bool), 1, file);
+
+    struct VendorCell vendorCell;
+    vendorCell.vendor = vendor;
+    vendorCell.connectedTo = connectedTo;
+    vendorCell.numberOfConnected = numberOfConnected;
+    vendorCell.isDeleted = isDeleted;
+
+    return vendorCell;
+}
+
+struct Os readOs(FILE* file) {
+    char basebandVersion[9]; // Key
+    int buildNumber;
+    int androidVersion;
+    char name[33];
+    int buildDate;
+    char vendorSAP[6];   // Key to it's vendor
+
+    fread(basebandVersion, sizeof(char), 9, file);
+    fread(&buildNumber, sizeof(int), 1, file);
+    fread(&androidVersion, sizeof(int), 1, file);
+    fread(name, sizeof(char), 33, file);
+    fread(&buildDate, sizeof(int), 1,file);
+    fread(vendorSAP, sizeof(char), 6, file);
+
+    struct Os os;
+    strncpy(os.basebandVersion, basebandVersion, 9);
+    os.buildNumber = buildNumber;
+    os.androidVersion = androidVersion;
+    strncpy(os.name, name, 33);
+    os.buildDate = buildDate;
+    strncpy(os.vendorSAP, vendorSAP, 6);
+
+    return os;
+}
+
+struct OsCell readOsCell(FILE* file) {
+    struct Os os = readOs(file);
+    bool isDeleted;
+    fread(&isDeleted, sizeof(bool), 1, file);
+
+    struct OsCell osCell;
+    osCell.os = os;
+    osCell.isDeleted = isDeleted;
+
+    return osCell;
 }
 
 void initFields(
@@ -143,7 +220,8 @@ static int compareVendor(const void *a, const void *b) {
 void normalizeVendor(const char *vendorFileName) {
     fseek(vendorFile, 0L, SEEK_END);
     unsigned long long numberOfVendors = ftell(vendorFile) /
-                                         (sizeof(struct Vendor) + sizeof(unsigned long long) + sizeof(int) + sizeof(bool));
+                                         (sizeof(struct Vendor) + sizeof(unsigned long long) + sizeof(int) +
+                                          sizeof(bool));
     fseek(vendorFile, 0, SEEK_SET);
 
     struct VendorCell vendorArray[numberOfVendors];
@@ -249,8 +327,8 @@ void normalizeOs(const char *osFileName) {
         fread(&isDeleted, sizeof(bool), 1, osFile);
         if (!isDeleted) {
             osArray[totalOs] = (struct OsCell) {
-                .isDeleted = isDeleted,
-                .os = &os
+                    .isDeleted = isDeleted,
+                    .os = &os
             };
             totalOs++;
         }

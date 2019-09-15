@@ -4,30 +4,29 @@
 #define PART_3_TABLES_H
 
 struct Vendor {
-    char SAP[5];  // Key
-    char name[32];
-    char countryCode[3];
+    char SAP[6];  // Key
+    char name[33];
+    char countryCode[4];
 };
 
 struct Os {
-    char basebandVersion[8]; // Key
+    char basebandVersion[9]; // Key
     int buildNumber;
     int androidVersion;
-    int securityPatch;
-    char name[32];
+    char name[33];
     int buildDate;
-    char vendorSAP[5];   // Key to it's vendor
+    char vendorSAP[6];   // Key to it's vendor
 };
 
 struct VendorCell {
-    struct Vendor* vendor;
+    struct Vendor vendor;
     unsigned long long connectedTo;
     int numberOfConnected;
     bool isDeleted;
 };
 
 struct OsCell {
-    struct Os* os;
+    struct Os os;
     bool isDeleted;
 };
 
