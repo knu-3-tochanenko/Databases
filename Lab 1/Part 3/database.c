@@ -3,6 +3,16 @@
 #include <stdlib.h>
 #include <string.h>
 
+struct Index readIndex(FILE* file) {
+    char SAP[5];
+    unsigned long long index;
+    fread(SAP, sizeof(char) * 5, 1, file);
+    fread(&index, sizeof(unsigned long long), 1, file);
+    struct Index elem;
+    elem.index = index;
+    //strn
+}
+
 void initFields(
         const char *vendorFileName,
         const char *indexFileName,
@@ -14,28 +24,29 @@ void initFields(
 
     //  Read all indexes to memory
     fseek(indexFile, 0L, SEEK_END);
-    numberOfEntries = ftell(indexFile) / sizeof(struct Index);
+    numberOfEntries = ftell(indexFile) / (sizeof(char) * 5 + sizeof(unsigned long long));
     fseek(indexFile, 0L, SEEK_SET);
-    struct Index *sub;
+    struct Index sub;
     for (unsigned long long i = 0; i < numberOfEntries; i++) {
         fread(sub, sizeof(sub), 1, indexFile);
         indexes[i] = *sub;
     }
 }
 
-struct Vendor* getVendor(char *key) {
-    struct Vendor* found = NULL;
+struct Vendor *getVendor(char *key) {
+    struct Vendor *found = NULL;
     for (int i = 0; i < numberOfEntries; i++) {
         if (strcmp(indexes[i].SAP, key) == 0) {
             fseek(vendorFile, indexes[i].index, SEEK_SET);
             // init fields
             struct VendorCell vendorCell;
             struct Vendor *vendor;
-            int connectedTo, numberOfConnected;
+            unsigned long long connectedTo;
+            int numberOfConnected;
             bool isDeleted;
             // Read all fields from file
             fread(vendor, sizeof(struct Vendor), 1, vendorFile);
-            fread(&connectedTo, sizeof(int), 1, vendorFile);
+            fread(&connectedTo, sizeof(unsigned long long), 1, vendorFile);
             fread(&numberOfConnected, sizeof(int), 1, vendorFile);
             fread(&isDeleted, sizeof(bool), 1, vendorFile);
             // Init VendorCell object
@@ -50,9 +61,9 @@ struct Vendor* getVendor(char *key) {
     return NULL;
 }
 
-struct Os* getOs(char *key) {
+struct Os *getOs(char *key) {
     fseek(osFile, 0L, SEEK_END);
-    unsigned long long numberOfOs = ftell(osFile) / sizeof(struct OsCell);
+    unsigned long long numberOfOs = ftell(osFile) / (sizeof(struct Os) + sizeof(bool));
     fseek(osFile, 0L, SEEK_SET);
 
     struct OsCell osCell;
@@ -67,13 +78,13 @@ struct Os* getOs(char *key) {
     return NULL;
 }
 
-struct Os* getAllOs() {
+struct Os *getAllOs() {
     fseek(osFile, 0L, SEEK_END);
-    unsigned long long numberOfOs = ftell(osFile) / sizeof(struct OsCell);
+    unsigned long long numberOfOs = ftell(osFile) / (sizeof(struct Os) + sizeof(bool));
     fseek(osFile, 0L, SEEK_SET);
 
     struct Os array[numberOfOs];
-    struct Os* os;
+    struct Os *os;
     bool isDeleted;
     for (unsigned long long i = 0; i < numberOfOs; i++) {
         fread(os, sizeof(struct Os), 1, osFile);
@@ -96,10 +107,6 @@ bool addVendor(struct Vendor *vendor) {
         fwrite(newVendor.vendor, sizeof(struct Vendor), 1, vendorFile);
         fwrite(vendor->SAP, sizeof(vendor->SAP), 1, indexFile);
         fwrite(&pos, sizeof(unsigned long long), 1, indexFile);
-        // TODO Write proper file function
-        fwrite(&newVendor, sizeof(newVendor), 1, vendorFile);
-        fwrite(&newVendor.vendor->SAP, sizeof(newVendor.vendor->SAP), 1, indexFile);
-        fwrite(&pos, sizeof(pos), 1, indexFile);
         indexes[numberOfEntries] = (struct Index) {
                 .SAP = *newVendor.vendor->SAP,
                 .index = pos
@@ -110,89 +117,163 @@ bool addVendor(struct Vendor *vendor) {
     return false;
 }
 
-bool add_os(struct Os *os) {
-    const struct OsCell newOS = {
+bool addOs(struct Os *os) {
+    const struct OsCell newOs = {
             .os = os,
             .isDeleted = 0
     };
 
     if (getOs(os->basebandVersion) == NULL) {
         fseek(osFile, 0L, SEEK_END);
-        int pos = ftell(osFile);
-        // TODO Write proper file function
-        fwrite(&newOS, sizeof(struct OsCell), 1, osFile);
+        // idk what this is supposet to do
+        // int pos = ftell(osFile);
+        fwrite(os, sizeof(struct Os), 1, osFile);
+        fwrite(&newOs.isDeleted, sizeof(bool), 1, osFile);
         return true;
     }
     return false;
 }
 
-static int compare_vendor(const void *a, const void *b) {
-    struct VendorCell *a_vendor = (struct VendorCell *) a;
-    struct VendorCell *b_vendor = (struct VendorCell *) b;
-    return strcmp(a_vendor->vendor->SAP, b_vendor->vendor->SAP);
+static int compareVendor(const void *a, const void *b) {
+    struct VendorCell *aVendor = (struct VendorCell *) a;
+    struct VendorCell *bVendor = (struct VendorCell *) b;
+    return strcmp(aVendor->vendor->SAP, bVendor->vendor->SAP);
 }
 
-void normalize_vendor(const char vendor_file_name[]) {
+void normalizeVendor(const char *vendorFileName) {
     fseek(vendorFile, 0L, SEEK_END);
-    int number_of_vendors = ftell(vendorFile) / sizeof(struct VendorCell);
+    unsigned long long numberOfVendors = ftell(vendorFile) /
+                                         (sizeof(struct Vendor) + sizeof(unsigned long long) + sizeof(int) + sizeof(bool));
     fseek(vendorFile, 0, SEEK_SET);
 
-    struct VendorCell vendor_array[number_of_vendors];
+    struct VendorCell vendorArray[numberOfVendors];
+    struct Vendor vendor;
+    unsigned long long connectedTo;
+    int numberOfConnected;
+    bool isDeleted;
+    int totalVendors = 0;
 
-    // TODO Write proper file function
-    fread(vendor_array, sizeof(struct VendorCell), number_of_vendors, vendorFile);
+    for (unsigned long long i = 0; i < numberOfVendors; i++) {
+        fread(&vendor, sizeof(struct Vendor), 1, vendorFile);
+        fread(&connectedTo, sizeof(unsigned long long), 1, vendorFile);
+        fread(&numberOfConnected, sizeof(int), 1, vendorFile);
+        fread(&isDeleted, sizeof(bool), 1, vendorFile);
 
-    qsort(vendor_array, number_of_vendors, sizeof(struct VendorCell), compare_vendor);
+        // Write vendor if still used
+        if (!isDeleted) {
+            vendorArray[totalVendors] = (struct VendorCell) {
+                    .vendor = &vendor,
+                    .numberOfConnected = numberOfConnected,
+                    .connectedTo = connectedTo,
+                    .isDeleted = isDeleted
+            };
+            totalVendors++;
+        }
+    }
+
+    // Sort vendors
+    qsort(vendorArray, totalVendors, sizeof(struct VendorCell), compareVendor);
+
+    // Update index table
+    numberOfEntries = totalVendors;
+    for (unsigned long long i = 0; i < totalVendors; i++) {
+        strncpy(indexes[i].SAP, vendorArray[i].vendor->SAP, 5);
+        indexes[i].index = i * (sizeof(struct Vendor) + sizeof(unsigned long long) + sizeof(int) + sizeof(bool));
+    }
+
+
     fclose(vendorFile);
-    //  TODO Add subelement count
-    vendorFile = fopen(vendor_file_name, "wb");
-    fwrite(vendor_array, sizeof(struct VendorCell), number_of_vendors, vendorFile);
-    fclose(vendorFile);
-}
-
-static int compare_os(const void *a, const void *b) {
-    struct OsCell *a_os = (struct OsCell *) a;
-    struct OsCell *b_os = (struct OsCell *) b;
-    int key_SAP = strcmp(a_os->os->vendorSAP, b_os->os->vendorSAP);
-    if (key_SAP == 0)
-        return strcmp(a_os->os->basebandVersion, b_os->os->basebandVersion);
-    else
-        return key_SAP;
-}
-
-void normalize_os(const char os_file_name[]) {
+    // Connect Vendors to os
     fseek(osFile, 0L, SEEK_END);
-    int number_of_os = ftell(osFile) / sizeof(struct OsCell);
+    unsigned long long numberOfOs = ftell(osFile) /
+                                    (sizeof(struct Os) + sizeof(bool));
+    fseek(osFile, 0L, SEEK_SET);
+    struct Os os;
+    int currentVendor = 0;
+    int currentOs = 0;
+    int osPosition = 0;
+    int compResult;
+    while (currentOs < numberOfOs) {
+        osPosition = ftell(osFile);
+        fread(&os, sizeof(struct Os), 1, osFile);
+        fread(&isDeleted, sizeof(bool), 1, osFile);
+        compResult = strcmp(os.vendorSAP, vendorArray[currentVendor].vendor->SAP);
+        if (compResult == 0) {
+            if (vendorArray[currentVendor].numberOfConnected == 0) {
+                vendorArray[currentVendor].numberOfConnected = 1;
+                vendorArray[currentVendor].connectedTo = osPosition;
+            } else
+                vendorArray[currentVendor].numberOfConnected++;
+        } else if (compResult < 0) {
+            // This shouldn't happen
+            // But it happened
+        } else if (compResult > 0)
+            currentVendor++;
+        currentOs++;
+    }
+
+    // Write vendors in file
+    vendorFile = fopen(vendorFileName, "wb");
+    for (unsigned long long i = 0; i < totalVendors; i++) {
+        fwrite(vendorArray[i].vendor, sizeof(struct Vendor), 1, vendorFile);
+        fwrite(&(vendorArray[i].connectedTo), sizeof(unsigned long long), 1, vendorFile);
+        fwrite(&(vendorArray[i].numberOfConnected), sizeof(int), 1, vendorFile);
+        fwrite(&(vendorArray[i].isDeleted), sizeof(bool), 1, vendorFile);
+    }
+    fclose(vendorFile);
+}
+
+static int compareOs(const void *a, const void *b) {
+    struct OsCell *aOs = (struct OsCell *) a;
+    struct OsCell *bOs = (struct OsCell *) b;
+    int keySAP = strcmp(aOs->os->vendorSAP, bOs->os->vendorSAP);
+    if (keySAP == 0)
+        return strcmp(aOs->os->basebandVersion, bOs->os->basebandVersion);
+    else
+        return keySAP;
+}
+
+void normalizeOs(const char *osFileName) {
+    fseek(osFile, 0L, SEEK_END);
+    unsigned long long numberOfOs = ftell(osFile) / sizeof(struct OsCell);
     fseek(osFile, 0L, SEEK_SET);
 
-    struct OsCell os_array[number_of_os];
+    struct OsCell osArray[numberOfOs];
 
     //  Read all OSes
-    for (int i = 0; i < number_of_os; i++) {
-        struct OsCell *os_cell;
-        // TODO Write proper file function
-        fread(&os_cell, sizeof(os_cell), 1, osFile);
-        os_array[i] = *os_cell;
+    struct Os os;
+    bool isDeleted;
+    int totalOs = 0;
+    for (unsigned long long i = 0; i < numberOfOs; i++) {
+        fread(&os, sizeof(struct Os), 1, osFile);
+        fread(&isDeleted, sizeof(bool), 1, osFile);
+        if (!isDeleted) {
+            osArray[totalOs] = (struct OsCell) {
+                .isDeleted = isDeleted,
+                .os = &os
+            };
+            totalOs++;
+        }
     }
 
     // Sort by Vendor's SAP and by baseband version
-    qsort(os_array, number_of_os, sizeof(struct OsCell), compare_os);
+    qsort(osArray, totalOs, sizeof(struct OsCell), compareOs);
 
     fclose(osFile);
-    osFile = fopen(os_file_name, "wb");
-    //  TODO Check if it writes all elements
-    // TODO Write proper file function
-    fwrite(os_array, sizeof(struct OsCell), number_of_os, osFile);
+    osFile = fopen(osFileName, "wb");
+    for (int i = 0; i < totalOs; i++) {
+        fwrite(osArray[i].os, sizeof(struct Os), 1, osFile);
+        fwrite(&(osArray[i].isDeleted), sizeof(bool), 1, osFile);
+    }
     fclose(osFile);
 }
 
-void normalize_index(const char index_file_name[]) {
+void normalizeIndex(const char *index_file_name) {
     fclose(indexFile);
     indexFile = fopen(index_file_name, "wb");
-    for (int i = 0; i < numberOfEntries; i++) {
-        // TODO Write proper file function
-        fwrite(indexes[i].SAP, sizeof(indexes[i].SAP), 1, indexFile);
-        fwrite(&indexes[i].index, sizeof(indexes[i].index), 1, indexFile);
+    for (unsigned long long i = 0; i < numberOfEntries; i++) {
+        fwrite(indexes[i].SAP, sizeof(char) * 5, 1, indexFile);
+        fwrite(&(indexes[i].index), sizeof(unsigned long long), 1, indexFile);
     }
     fclose(indexFile);
 }
@@ -204,9 +285,9 @@ void normalize(
         const char index_file_name[],
         const char os_file_name[]
 ) {
-    normalize_os(os_file_name);
-    normalize_vendor(vendor_file_name);
-    normalize_index(index_file_name);
+    normalizeOs(os_file_name);
+    normalizeVendor(vendor_file_name);
+    normalizeIndex(index_file_name);
     //  Reopen files
     initFields(vendor_file_name, index_file_name, os_file_name);
 }
@@ -235,7 +316,7 @@ void end() {
 
 const struct db DB = {
         // User functions
-        .addOs = add_os,
+        .addOs = addOs,
         .addVendor = addVendor,
         .getAllOs = getAllOs,
         .getOs = getOs,

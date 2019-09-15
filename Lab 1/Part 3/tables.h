@@ -21,7 +21,7 @@ struct Os {
 
 struct VendorCell {
     struct Vendor* vendor;
-    int connectedTo;
+    unsigned long long connectedTo;
     int numberOfConnected;
     bool isDeleted;
 };
@@ -33,7 +33,7 @@ struct OsCell {
 
 struct Index {
     char SAP[5];
-    int index;
+    unsigned long long index;
 };
 
 #endif //PART_3_TABLES_H
