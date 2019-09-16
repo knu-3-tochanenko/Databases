@@ -8,6 +8,6 @@
 
 int IMAGE_NUMBER;
 
-bool insert_m(char *ptr, FILE **masterFile);
+bool addVendor(char *ptr, FILE **vendorFile);
 
-bool insert_s(char *ptr, FILE **masterFile, FILE **slaveFile);
+bool addOs(char *ptr, FILE **vendorFile, FILE **osFile);

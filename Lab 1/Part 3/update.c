@@ -1,37 +1,37 @@
 #include "update.h"
 
-bool update_m(char *ptr, FILE **masterFile) {
-    int index = get_m(ptr, masterFile);
+bool updateVendor(char *pointer, FILE **vendorFile) {
+    int index = getVendor(pointer, vendorFile);
     if (index == -1)
         return false;
-    unsigned long id = 0;
-    fseek(*masterFile, sizeof(struct Contributor) * index, SEEK_SET);
-    fread(&id, sizeof(unsigned long), 1, *masterFile);
-    struct Contributor *contributor = readContributor();
-    contributor->userID = id;
-    fseek(*masterFile, sizeof(struct Contributor) * index, SEEK_SET);
-    fwrite(contributor, sizeof(struct Contributor), 1, *masterFile);
-    free(contributor);
+    unsigned long SAP = 0;
+    fseek(*vendorFile, sizeof(struct Vendor) * index, SEEK_SET);
+    fread(&SAP, sizeof(unsigned long), 1, *vendorFile);
+    struct Vendor *vendor = readVendor();
+    vendor->SAP = SAP;
+    fseek(*vendorFile, sizeof(struct Vendor) * index, SEEK_SET);
+    fwrite(vendor, sizeof(struct Vendor), 1, *vendorFile);
+    free(vendor);
     return true;
 }
 
-bool update_s(char *ptr, FILE **masterFile, FILE **slaveFile) {
-    int index = get_s(ptr, masterFile, slaveFile);
+bool updateOs(char *pointer, FILE **vendorFile, FILE **osFile) {
+    int index = getOs(pointer, vendorFile, osFile);
     if (index == -1)
         return false;
     unsigned long contributorID = 0, imageID = 0;
     int nextImage = -1;
-    fseek(*slaveFile, sizeof(struct Image) * index, SEEK_SET);
-    fread(&imageID, sizeof(unsigned long), 1, *slaveFile);
-    fread(&contributorID, sizeof(unsigned long), 1, *slaveFile);
-    fseek(*slaveFile, sizeof(struct Image) * (index + 1) - sizeof(int), SEEK_SET);
-    fread(&nextImage, sizeof(int), 1, *slaveFile);
-    struct Image *image = readImage();
-    image->imageID = imageID;
-    image->contributorID = contributorID;
+    fseek(*osFile, sizeof(struct Os) * index, SEEK_SET);
+    fread(&imageID, sizeof(unsigned long), 1, *osFile);
+    fread(&contributorID, sizeof(unsigned long), 1, *osFile);
+    fseek(*osFile, sizeof(struct Os) * (index + 1) - sizeof(int), SEEK_SET);
+    fread(&nextImage, sizeof(int), 1, *osFile);
+    struct Os *image = readOs();
+    image->basebandVersion = imageID;
+    image->SAP = contributorID;
     image->nextIndex = nextImage;
-    fseek(*slaveFile, sizeof(struct Image) * index, SEEK_SET);
-    fwrite(image, sizeof(struct Image), 1, *slaveFile);
+    fseek(*osFile, sizeof(struct Os) * index, SEEK_SET);
+    fwrite(image, sizeof(struct Os), 1, *osFile);
     free(image);
     return true;
 }

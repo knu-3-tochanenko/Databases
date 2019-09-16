@@ -17,32 +17,26 @@ struct Date {
 const unsigned long DATE_SIZE;
 
 
-struct Contributor {
-    unsigned long userID;
-    char name[25];
-    char eMail[25];
-    char password[10];
-    char address[25];
+struct Vendor {
+    unsigned long SAP;
+    char name[33];
+    char countryCode[4];
     int firstImage;
 };
 
 
-const unsigned long CONTRIBUTOR_SIZE;
+const unsigned long VENDOR_SIZE;
 
-struct Image {
-    unsigned long imageID;
-    unsigned long contributorID;
-    char imageType[15];
-    float width;
-    float height;
-    float earnings;
-    char status[25];
-    struct Date* date;
+struct Os {
+    unsigned long basebandVersion;
+    unsigned long SAP;
+    char name[33];
+    struct Date* buildDate;
     int nextIndex;
 };
 
 
-const unsigned long IMAGE_SIZE;
+const unsigned long OS_SIZE;
 
 struct Cell {
     unsigned long id;

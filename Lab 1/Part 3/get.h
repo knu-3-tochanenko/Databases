@@ -6,6 +6,6 @@
 #include <string.h>
 #include <stdlib.h>
 
-int get_m(char *ptr, FILE **masterFile);
+int getVendor(char *ptr, FILE **vendorFile);
 
-int get_s(char *ptr, FILE **masterFile, FILE **slaveFile);
+int getOs(char *ptr, FILE **vendorFile, FILE **osFile);

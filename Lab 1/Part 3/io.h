@@ -5,30 +5,30 @@
 #include <stdbool.h>
 #include <string.h>
 
-struct Contributor *readContributor();
+struct Vendor *readVendor();
 
 struct Date *readDate();
 
-struct Image *readImage();
+struct Os *readOs();
 
 unsigned int readTimeUnit(const char *text, const int left, const int right);
 
-void writeContributor(const struct Contributor *contributor, FILE **masterFile);
+void writeVendorToFile(const struct Vendor *vendor, FILE **vendorFile);
 
-void writeImage(const struct Image *image, FILE **slaveFile);
+void writeOsToFile(const struct Os *os, FILE **osFile);
 
-void writeDate(const struct Date *date, FILE **slaveFile);
+void writeDate(const struct Date *date, FILE **osFile);
 
-void printContributor(const struct Contributor *contributor);
+void writeVendor(const struct Vendor *vendor);
 
-void printImage(const struct Image *image);
+void writeOs(const struct Os *os);
 
 void printDate(const struct Date *date);
 
-int getContributorIndex(const unsigned long id, FILE **masterFile);
+int getVendorSAP(const unsigned long id, FILE **vendorFile);
 
-int getImageID(const unsigned long id, FILE **slaveFile);
+int getOsVersion(const unsigned long id, FILE **osFile);
 
-int getImageIndex(const int index, FILE **masterFile);
+int getOsIndex(const int index, FILE **vendorFile);
 
-void setImageIndex(const unsigned long contributorIndex, const unsigned long imageIndex, FILE **masterFile);
+void setImageIndex(const unsigned long vendorSAP, const unsigned long osBasebandVersion, FILE **vendorFile);

@@ -1,47 +1,26 @@
 #include "io.h"
 
-struct Contributor *readContributor() {
-    struct Contributor *contributor = malloc(sizeof(struct Contributor));
+struct Vendor *readVendor() {
+    struct Vendor *contributor = malloc(sizeof(struct Vendor));
     char name[25];
     setbuf(stdout, 0);
-    printf("\nEnter Contributor name:");
+    printf("\nEnter Vendor name:");
     scanf("%s", name);
     strcpy(contributor->name, name);
     setbuf(stdout, 0);
-    printf("\nEnter Contributor e-mail:");
-    scanf("%s", contributor->eMail);
-    setbuf(stdout, 0);
-    printf("\nEnter Contributor password:");
-    scanf("%s", contributor->password);
-    setbuf(stdout, 0);
-    printf("\nEnter Contributor address:");
-    scanf("%s", contributor->address);
+    printf("\nEnter Vendor countryCode:");
+    scanf("%s", contributor->countryCode);
     return contributor;
 }
 
-struct Image *readImage() {
-    struct Image *image = malloc(sizeof(struct Image));
+struct Os *readOs() {
+    struct Os *os = malloc(sizeof(struct Os));
     char width[25], height[25], earnings[25];
     setbuf(stdout, 0);
-    printf("\nEnter Image type:");
-    scanf("%s", image->imageType);
-    setbuf(stdout, 0);
-    printf("\nEnter Image width:");
-    scanf("%s", width);
-    image->width = strtof(width, NULL);
-    setbuf(stdout, 0);
-    printf("\nEnter Image height:");
-    scanf("%s", height);
-    image->height = strtof(height, NULL);
-    setbuf(stdout, 0);
-    printf("\nEnter earning for Image:");
-    scanf("%s", earnings);
-    image->earnings = strtof(earnings, NULL);
-    setbuf(stdout, 0);
-    printf("\nEnter Image status:");
-    scanf("%s", image->status);
-    image->date = readDate();
-    return image;
+    printf("\nEnter Os type:");
+    scanf("%s", os->name);
+    os->buildDate = readDate();
+    return os;
 }
 
 struct Date *readDate() {
@@ -85,91 +64,79 @@ unsigned int readTimeUnit(const char *text, const int left, const int right) {
     return unit;
 }
 
-void writeContributor(const struct Contributor *contributor, FILE **masterFile) {
+void writeVendorToFile(const struct Vendor *vendor, FILE **vendorFile) {
     int status = 1;
-    fwrite(contributor, sizeof(struct Contributor), 1, *masterFile);
-    fwrite(&status, sizeof(unsigned int), 1, *masterFile);
-    printf("%ld", ftell(*masterFile));
+    fwrite(vendor, sizeof(struct Vendor), 1, *vendorFile);
+    fwrite(&status, sizeof(unsigned int), 1, *vendorFile);
+    printf("%ld", ftell(*vendorFile));
 }
 
-void writeImage(const struct Image *image, FILE **slaveFile) {
+void writeOsToFile(const struct Os *os, FILE **osFile) {
     int status = 1;
-    fwrite(image, sizeof(struct Image), 1, *slaveFile);
-    fwrite(&status, sizeof(unsigned int), 1, *slaveFile);
+    fwrite(os, sizeof(struct Os), 1, *osFile);
+    fwrite(&status, sizeof(unsigned int), 1, *osFile);
 }
 
-void writeDate(const struct Date *date, FILE **slaveFile) {
-    fwrite(&date->year, sizeof(unsigned int), 1, *slaveFile);
-    fwrite(&date->month, sizeof(unsigned int), 1, *slaveFile);
-    fwrite(&date->day, sizeof(unsigned int), 1, *slaveFile);
-    fwrite(&date->hour, sizeof(unsigned int), 1, *slaveFile);
-    fwrite(&date->minute, sizeof(unsigned int), 1, *slaveFile);
+void writeDate(const struct Date *date, FILE **osFile) {
+    fwrite(&date->year, sizeof(unsigned int), 1, *osFile);
+    fwrite(&date->month, sizeof(unsigned int), 1, *osFile);
+    fwrite(&date->day, sizeof(unsigned int), 1, *osFile);
+    fwrite(&date->hour, sizeof(unsigned int), 1, *osFile);
+    fwrite(&date->minute, sizeof(unsigned int), 1, *osFile);
 }
 
-void printContributor(const struct Contributor *contributor) {
+void writeVendor(const struct Vendor *vendor) {
     setbuf(stdout, 0);
-    printf("\nContributor ID: %ld", contributor->userID);
+    printf("\nVendor ID: %ld", vendor->SAP);
     setbuf(stdout, 0);
-    printf("\nContributor name: %s", contributor->name);
+    printf("\nVendor name: %s", vendor->name);
     setbuf(stdout, 0);
-    printf("\nContributor e-mail: %s", contributor->eMail);
-    setbuf(stdout, 0);
-    printf("\nContributor password: %s", contributor->password);
-    setbuf(stdout, 0);
-    printf("\nContributor address: %s", contributor->address);
+    printf("\nVendor countryCode: %s", vendor->countryCode);
 }
 
-void printImage(const struct Image *image) {
+void writeOs(const struct Os *os) {
     setbuf(stdout, 0);
-    printf("\nImage type: %s", image->imageType);
-    setbuf(stdout, 0);
-    printf("\nImage width: %f", image->width);
-    setbuf(stdout, 0);
-    printf("\nImage height: %f", image->height);
-    setbuf(stdout, 0);
-    printf("\nEarnings for Image: %f", image->earnings);
-    setbuf(stdout, 0);
-    printf("\nImage status: %s", image->status);
-    printDate(image->date);
+    printf("\nOs type: %s", os->name);
+    printDate(os->buildDate);
 }
 
 void printDate(const struct Date *date) {
     printf("Date: %i:%i  %i/%i/%i", date->hour, date->minute, date->month, date->day, date->year);
 }
 
-int getContributorIndex(const unsigned long id, FILE **masterFile) {
+int getVendorSAP(const unsigned long id, FILE **vendorFile) {
     unsigned int status = 0;
     int index = searchTable(id);
     printf("%i", index);
     if (index != -1) {
-        fseek(*masterFile, (index + 1) * sizeof(struct Contributor), SEEK_SET);
-        fread(&status, sizeof(unsigned int), 1, *masterFile);
+        fseek(*vendorFile, (index + 1) * sizeof(struct Vendor), SEEK_SET);
+        fread(&status, sizeof(unsigned int), 1, *vendorFile);
         if (status == 1)
             return index;
     }
     return -1;
 }
 
-int getImageID(const unsigned long id, FILE **slaveFile) {
+int getOsVersion(const unsigned long id, FILE **osFile) {
     int i = 0;
-    struct Image *image = malloc(sizeof(struct Image));
-    fseek(*slaveFile, 0, SEEK_SET);
-    while (fread(image, sizeof(struct Image), 1, *slaveFile)) {
-        if (image->imageID == id)
+    struct Os *image = malloc(sizeof(struct Os));
+    fseek(*osFile, 0, SEEK_SET);
+    while (fread(image, sizeof(struct Os), 1, *osFile)) {
+        if (image->basebandVersion == id)
             return i;
         i++;
     }
     return -1;
 }
 
-void setImageIndex(const unsigned long contributorIndex, const unsigned long imageIndex, FILE **masterFile) {
-    fseek(*masterFile, sizeof(struct Contributor) * (contributorIndex + 1) - sizeof(int), SEEK_SET);
-    fwrite(&imageIndex, sizeof(int), 1, *masterFile);
+void setImageIndex(const unsigned long vendorSAP, const unsigned long osBasebandVersion, FILE **vendorFile) {
+    fseek(*vendorFile, sizeof(struct Vendor) * (vendorSAP + 1) - sizeof(int), SEEK_SET);
+    fwrite(&osBasebandVersion, sizeof(int), 1, *vendorFile);
 }
 
-int getImageIndex(const int index, FILE **masterFile) {
-    struct Contributor *contributor = malloc(sizeof(struct Contributor));
-    fseek(*masterFile, sizeof(struct Contributor) * index, SEEK_SET);
-    fread(contributor, sizeof(struct Contributor), 1, *masterFile);
-    return contributor->firstImage;
+int getOsIndex(const int index, FILE **vendorFile) {
+    struct Vendor *vendor = malloc(sizeof(struct Vendor));
+    fseek(*vendorFile, sizeof(struct Vendor) * index, SEEK_SET);
+    fread(vendor, sizeof(struct Vendor), 1, *vendorFile);
+    return vendor->firstImage;
 }

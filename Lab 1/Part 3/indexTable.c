@@ -76,11 +76,11 @@ void add(unsigned long id, unsigned int index) {
     sorted = false;
 }
 
-int comp(const void *elem1, const void *elem2) {
-    struct Cell f = *((struct Cell *) elem1);
-    if (elem2 == NULL)
+int comp(const void *a, const void *b) {
+    struct Cell f = *((struct Cell *) a);
+    if (b == NULL)
         return 1;
-    struct Cell s = *((struct Cell *) elem2);
+    struct Cell s = *((struct Cell *) b);
     if (f.id > s.id) return 1;
     if (f.id < s.id) return -1;
     return 0;

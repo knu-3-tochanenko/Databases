@@ -16,16 +16,15 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <string.h>
-// <3
-bool function(const char masterFName[25], const char indexTableFName[25], const char slaveFName[25]);
+bool function(const char vendorFileName[25], const char indexFileName[25], const char osFileName[25]);
 
-bool openFile(const char fName[25], FILE **ptr);
+bool openFile(const char fileName[25], FILE **file);
 
-bool listen(FILE **masterFile, FILE **indexFile, FILE **slaveFile);
+bool listen(FILE **vendorFile, FILE **indexFile, FILE **osFile);
 
-void rewrite(const char masterFName[25], const char indexTableFName[25], const char slaveFName[25],
-             FILE **masterFile, FILE **indexFile, FILE **slaveFile);
+void rewrite(const char vendorFileName[25], const char indexFileName[25], const char osFileName[25],
+             FILE **vendorFile, FILE **indexFile, FILE **osFile);
 
-int comp(const void *elem1, const void *elem2);
+int comp(const void *a, const void *b);
 
 #endif //UNTITLED_RUN_H

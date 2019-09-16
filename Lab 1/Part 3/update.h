@@ -6,6 +6,6 @@
 #include <stdbool.h>
 #include <string.h>
 
-bool update_m(char *ptr, FILE **masterFile);
+bool updateVendor(char *pointer, FILE **vendorFile);
 
-bool update_s(char *ptr, FILE **masterFile, FILE** slaveFile);
+bool updateOs(char *pointer, FILE **vendorFile, FILE** osFile);

@@ -1,37 +1,37 @@
 #include "run.h"
 
-bool function(const char masterFName[25], const char indexTableFName[25], const char slaveFName[25]) {
+bool function(const char vendorFileName[25], const char indexFileName[25], const char osFileName[25]) {
     //open or create database files
-    FILE *masterFile = NULL, *indexTable = NULL, *slaveFile = NULL;
-    if (!openFile(masterFName, &masterFile))
+    FILE *vendorFile = NULL, *indexTable = NULL, *osFile = NULL;
+    if (!openFile(vendorFileName, &vendorFile))
         return false;
-    if (!openFile(indexTableFName, &indexTable))
+    if (!openFile(indexFileName, &indexTable))
         return false;
-    if (!openFile(slaveFName, &slaveFile))
+    if (!openFile(osFileName, &osFile))
         return false;
 
     initializeTable();
     readTable(&indexTable);
 
-    if (!listen(&masterFile, &indexTable, &slaveFile))
+    if (!listen(&vendorFile, &indexTable, &osFile))
         return false;
 
-    rewrite(masterFName, indexTableFName, slaveFName,
-            &masterFile, &indexTable, &slaveFile);
+    rewrite(vendorFileName, indexFileName, osFileName,
+            &vendorFile, &indexTable, &osFile);
 
     return true;
 }
 
 
-bool openFile(const char fName[25], FILE **ptr) {
-    *ptr = fopen(fName, "r+b");
-    if (*ptr == NULL) {
+bool openFile(const char fileName[25], FILE **file) {
+    *file = fopen(fileName, "r+b");
+    if (*file == NULL) {
         setbuf(stdout, 0);
-        printf("File %s does not exist!\n", fName);
+        printf("File %s does not exist!\n", fileName);
         setbuf(stdout, 0);
-        printf("Creating new %s file...\n", fName);
-        *ptr = fopen(fName, "w+b");
-        if (*ptr == NULL) {
+        printf("Creating new %s file...\n", fileName);
+        *file = fopen(fileName, "w+b");
+        if (*file == NULL) {
             setbuf(stdout, 0);
             printf("Creation failed.\n");
             return false;
@@ -42,7 +42,8 @@ bool openFile(const char fName[25], FILE **ptr) {
     return true;
 }
 
-bool listen(FILE **masterFile, FILE **indexFile, FILE **slaveFile) {
+bool listen(FILE **vendorFile, FILE **indexFile, FILE **osFile) {
+    // TODO Change CLI a bit
     char buffer[100];
     while (gets(buffer)) {
         char *ptr = strtok(buffer, " ");
@@ -52,60 +53,60 @@ bool listen(FILE **masterFile, FILE **indexFile, FILE **slaveFile) {
             break;
         else if (strcmp(ptr, "insert-m") == 0) {
             ptr = strtok(NULL, " ");
-            if (insert_m(ptr, masterFile))
+            if (addVendor(ptr, vendorFile))
                 continue;
             else
                 printf("Error!");
         } else if (strcmp(ptr, "insert-s") == 0) {
             ptr = strtok(NULL, " ");
-            if (insert_s(ptr, masterFile, slaveFile))
+            if (addOs(ptr, vendorFile, osFile))
                 continue;
             else
                 printf("Error!");
         } else if (strcmp(ptr, "get-m") == 0) {
             ptr = strtok(NULL, " ");
-            get_m(ptr, masterFile);
+            getVendor(ptr, vendorFile);
             continue;
         } else if (strcmp(ptr, "get-s") == 0) {
             ptr = strtok(NULL, " ");
-            get_s(ptr, masterFile, slaveFile);
+            getOs(ptr, vendorFile, osFile);
             continue;
         } else if (strcmp(ptr, "del-m") == 0) {
             ptr = strtok(NULL, " ");
-            if (del_m(ptr, masterFile))
+            if (del_m(ptr, vendorFile))
                 continue;
             else
                 printf("Wrong command!");
         } else if (strcmp(ptr, "del-s") == 0) {
             ptr = strtok(NULL, " ");
-            if (del_s(ptr, masterFile, slaveFile))
+            if (del_s(ptr, vendorFile, osFile))
                 continue;
             else
                 printf("Wrong command!");
         } else if (strcmp(ptr, "update-m") == 0) {
             ptr = strtok(NULL, " ");
-            if (update_m(ptr, masterFile))
+            if (updateVendor(ptr, vendorFile))
                 continue;
             else
                 printf("Wrong command!");
         } else if (strcmp(ptr, "update-s") == 0) {
             ptr = strtok(NULL, " ");
-            if (update_s(ptr, masterFile, slaveFile))
+            if (updateOs(ptr, vendorFile, osFile))
                 continue;
             else
                 printf("Error!");
         } else if (strcmp(ptr, "count-m") == 0) {
             ptr = strtok(NULL, " ");
             setbuf(stdout, 0);
-            printf("Number of cells in master file: %i", count_m(ptr, masterFile));
+            printf("Number of cells in master file: %i", count_m(ptr, vendorFile));
             continue;
         } else if (strcmp(ptr, "count-s") == 0) {
             ptr = strtok(NULL, " ");
-            printf("Number of cells for user in slave file: %i", count_s(ptr, slaveFile));
+            printf("Number of cells for user in slave file: %i", count_s(ptr, osFile));
             continue;
         } else if (strcmp(ptr, "count-all") == 0) {
             ptr = strtok(NULL, " ");
-            printf("Number of cells in slave file: %i", count_all(ptr, slaveFile));
+            printf("Number of cells in slave file: %i", count_all(ptr, osFile));
             continue;
         } else {
             setbuf(stdout, 0);
@@ -116,21 +117,21 @@ bool listen(FILE **masterFile, FILE **indexFile, FILE **slaveFile) {
     return true;
 }
 
-void rewrite(const char masterFName[25], const char indexTableFName[25], const char slaveFName[25],
-             FILE **masterFile, FILE **indexFile, FILE **slaveFile) {
+void rewrite(const char vendorFileName[25], const char indexFileName[25], const char osFileName[25],
+             FILE **vendorFile, FILE **indexFile, FILE **osFile) {
 
-    FILE *newMaster = fopen("master.fl", "w+");
-    FILE *newIndex = fopen("master.ind", "w+");
+    FILE *newVendorFile = fopen("vendor.fl", "w+");
+    FILE *newIndexFile = fopen("vendor.ind", "w+");
 
-    fclose(*masterFile);
+    fclose(*vendorFile);
     fclose(*indexFile);
-    fclose(*slaveFile);
+    fclose(*osFile);
 
-    remove(masterFName);
-    remove(indexTableFName);
+    remove(vendorFileName);
+    remove(indexFileName);
 
-    fclose(newMaster);
-    fclose(newIndex);
-    rename("master.fl", masterFName);
-    rename("master.ind", indexTableFName);
+    fclose(newVendorFile);
+    fclose(newIndexFile);
+    rename("vendor.fl", vendorFileName);
+    rename("vendor.ind", indexFileName);
 }

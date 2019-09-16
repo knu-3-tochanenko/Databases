@@ -21,4 +21,4 @@ void sortTable();
 
 void add(unsigned long id, unsigned int index);
 
-int comp(const void *elem1, const void *elem2);
+int comp(const void *a, const void *b);
