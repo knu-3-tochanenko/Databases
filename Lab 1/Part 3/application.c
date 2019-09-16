@@ -39,12 +39,14 @@ bool openFile(const char fileName[25], FILE **ptr) {
             return false;
         }
         setbuf(stdout, 0);
-        printf("Creation successed.\n");
+        printf("Created file!\n");
     }
     return true;
 }
 
 bool listen(FILE **vendorFile, FILE **indexFile, FILE **osFile) {
+    setbuf(stdout, 0);
+    printf("Waiting for command:\n");
     char buffer[100];
     while (gets(buffer)) {
         char *ptr = strtok(buffer, " ");
@@ -72,13 +74,13 @@ bool listen(FILE **vendorFile, FILE **indexFile, FILE **osFile) {
             ptr = strtok(NULL, " ");
             getOs(ptr, vendorFile, osFile);
             continue;
-        } else if (strcmp(ptr, "removeIndex-m") == 0) {
+        } else if (strcmp(ptr, "-rmi-v") == 0) {
             ptr = strtok(NULL, " ");
             if (removeVendor(ptr, vendorFile, osFile))
                 continue;
             else
                 printf("Wrong command!");
-        } else if (strcmp(ptr, "-rmi-v") == 0) {
+        } else if (strcmp(ptr, "-rmi-o") == 0) {
             ptr = strtok(NULL, " ");
             if (removeOs(ptr, vendorFile, osFile))
                 continue;

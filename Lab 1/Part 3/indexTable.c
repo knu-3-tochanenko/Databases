@@ -13,7 +13,6 @@ void readTable(FILE **indexFile) {
     unsigned long id = 0;
     unsigned int index = 0, i = 0;
     while (fread(&id, sizeof(unsigned long), 1, *indexFile)) {
-        printf("i");
         fread(&index, sizeof(unsigned int), 1, *indexFile);
         indexTable[i]->SAP = id;
         indexTable[i]->index = index;
@@ -58,7 +57,6 @@ int searchTable(unsigned long SAP) {
         }
     }
     if (flag) {
-        printf("%i", indexTable[mid]->index);
         while (indexTable[mid]->SAP == indexTable[mid + 1]->SAP &&
                indexTable[mid]->index < SAP < indexTable[mid + 1]->index) {
             mid++;

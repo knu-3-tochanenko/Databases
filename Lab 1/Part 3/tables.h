@@ -5,8 +5,6 @@ struct Date {
     unsigned int year;
     unsigned int month;
     unsigned int day;
-    unsigned int hour;
-    unsigned int minute;
 };
 
 
@@ -17,7 +15,7 @@ struct Vendor {
     unsigned long SAP;
     char name[25];
     char countryCode[10];
-    int cennoctedTo;
+    int connectedTo;
 };
 
 

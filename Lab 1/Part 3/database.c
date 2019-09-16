@@ -237,7 +237,7 @@ bool insertVendor(char *ptr, FILE **vendorFile) {
     } else {
         struct Vendor *vendor = readVendor();
         vendor->SAP = SAP;
-        vendor->cennoctedTo = -1;
+        vendor->connectedTo = -1;
 
         fseek(*vendorFile, 0, SEEK_END);
         long index = ftell(*vendorFile) / (sizeof(struct Vendor) + sizeof(int));

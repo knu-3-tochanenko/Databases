@@ -4,11 +4,11 @@ struct Vendor *readVendor() {
     struct Vendor *vendor = malloc(sizeof(struct Vendor));
     char name[25];
     setbuf(stdout, 0);
-    printf("\nName:");
+    printf("Name:\n");
     scanf("%s", name);
     strcpy(vendor->name, name);
     setbuf(stdout, 0);
-    printf("\nCountry code:");
+    printf("Country code:\n");
     scanf("%s", vendor->countryCode);
     return vendor;
 }
@@ -17,10 +17,10 @@ struct Os *readOs() {
     struct Os *os = malloc(sizeof(struct Os));
     char width[25], height[25], earnings[25];
     setbuf(stdout, 0);
-    printf("\nAndroid version:");
+    printf("Android version:\n");
     scanf("%s", os->androidVersion);
     setbuf(stdout, 0);
-    printf("\nName:");
+    printf("Name:\n");
     scanf("%s", os->name);
     os->date = readDate();
     return os;
@@ -43,12 +43,6 @@ struct Date *readDate() {
         days = 31;
     }
     date->day = readTimeUnit("Day: ", 1, days);
-    date->hour = readTimeUnit("Hour: ", 0, 24);
-    if (date->hour == 24) {
-        date->minute = readTimeUnit("Minute: ", 0, 0);
-    } else {
-        date->minute = readTimeUnit("Minute: ", 0, 60);
-    }
     return date;
 }
 
@@ -58,7 +52,7 @@ unsigned int readTimeUnit(const char *text, const int left, const int right) {
     bool valid = false;
     while (!valid) {
         setbuf(stdout, 0);
-        printf("\n%s", text);
+        printf("%s\n", text);
         scanf("%s", unitStr);
         unit = strtol(unitStr, NULL, 10);
         if (unit >= left && unit <= right)
@@ -83,29 +77,27 @@ void writeDate(const struct Date *date, FILE **osFile) {
     fwrite(&date->year, sizeof(unsigned int), 1, *osFile);
     fwrite(&date->month, sizeof(unsigned int), 1, *osFile);
     fwrite(&date->day, sizeof(unsigned int), 1, *osFile);
-    fwrite(&date->hour, sizeof(unsigned int), 1, *osFile);
-    fwrite(&date->minute, sizeof(unsigned int), 1, *osFile);
 }
 
 void printVendor(const struct Vendor *vendor) {
     setbuf(stdout, 0);
-    printf("\nSAP: %ld", vendor->SAP);
+    printf("\nSAP: %ld\n", vendor->SAP);
     setbuf(stdout, 0);
-    printf("\nName: %s", vendor->name);
+    printf("Name: %s\n", vendor->name);
     setbuf(stdout, 0);
-    printf("\nCountry code: %s", vendor->countryCode);
+    printf("Country code: %s\n", vendor->countryCode);
 }
 
 void printOs(const struct Os *os) {
     setbuf(stdout, 0);
-    printf("\nAndroid version: %s", os->androidVersion);
+    printf("\nAndroid version: %s\n", os->androidVersion);
     setbuf(stdout, 0);
-    printf("\nName: %s", os->name);
+    printf("Name: %s\n", os->name);
     printDate(os->date);
 }
 
 void printDate(const struct Date *date) {
-    printf("\nDate: %i:%i  %i/%i/%i", date->hour, date->minute, date->month, date->day, date->year);
+    printf("Date: %i/%i/%i\n", date->month, date->day, date->year);
 }
 
 int getVendorIndex(const unsigned long SAP, FILE **vendorFile) {
@@ -114,7 +106,6 @@ int getVendorIndex(const unsigned long SAP, FILE **vendorFile) {
     if (index != -1) {
         fseek(*vendorFile, (index + 1) * (sizeof(struct Vendor) + sizeof(int)) - sizeof(int), SEEK_SET);
         fread(&status, sizeof(unsigned int), 1, *vendorFile);
-        printf("\n%i   ", status);
         if (status == 1)
             return index;
     }
@@ -142,7 +133,7 @@ int getOsIndex(const int index, FILE **vendorFile) {
     struct Vendor *vendor = malloc(sizeof(struct Vendor));
     fseek(*vendorFile, (sizeof(struct Vendor) + sizeof(int)) * index, SEEK_SET);
     fread(vendor, sizeof(struct Vendor), 1, *vendorFile);
-    int firstos = vendor->cennoctedTo;
+    int firstos = vendor->connectedTo;
     free(vendor);
     return firstos;
 }
