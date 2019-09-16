@@ -1,38 +1,41 @@
-#include "boolean.h"
+#ifndef UNTITLED_STRUCTURES_H
+#define UNTITLED_STRUCTURES_H
 
-#ifndef PART_3_TABLES_H
-#define PART_3_TABLES_H
+struct Date {
+    unsigned int year;
+    unsigned int month;
+    unsigned int day;
+};
+
+
+const unsigned long DATE_SIZE;
+
 
 struct Vendor {
-    char SAP[6];  // Key
-    char name[33];
-    char countryCode[4];
+    unsigned long SAP;
+    char name[25];
+    char countryCode[10];
+    int connectedTo;
 };
+
+
+const unsigned long vendor_SIZE;
 
 struct Os {
-    char basebandVersion[9]; // Key
-    int buildNumber;
-    int androidVersion;
-    char name[33];
-    int buildDate;
-    char vendorSAP[6];   // Key to it's vendor
+    unsigned long baseband;
+    unsigned long vendorSAP;
+    char androidVersion[15];
+    char name[25];
+    struct Date* date;
+    int nextIndex;
 };
 
-struct VendorCell {
-    struct Vendor vendor;
-    long long connectedTo;
-    int numberOfConnected;
-    bool isDeleted;
+
+const unsigned long os_SIZE;
+
+struct Cell {
+    unsigned long SAP;
+    unsigned int index;
 };
 
-struct OsCell {
-    struct Os os;
-    bool isDeleted;
-};
-
-struct Index {
-    char SAP[5];
-    long long index;
-};
-
-#endif //PART_3_TABLES_H
+#endif //UNTITLED_STRUCTURES_H

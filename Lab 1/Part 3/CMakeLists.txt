@@ -3,4 +3,9 @@ project(Part_3 C)
 
 set(CMAKE_C_STANDARD 11)
 
-add_executable(Part_3 main.c database.h database.c tables.h boolean.h application.h application.c)
+add_executable(Part_3 main.c
+        tables.h
+        indexTable.h indexTable.c
+        application.h application.c
+        inputoutput.h inputoutput.c
+        database.h database.c)

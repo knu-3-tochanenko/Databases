@@ -1,117 +1,129 @@
 #include "application.h"
-#include <stdio.h>
-#include <string.h>
+#include "database.h"
+#include "indexTable.h"
 
-void add(char *tag) {
-    if (strcmp(tag, "vendor") == 0) {
-        setbuf(stdout, 0);
-        printf("SAP[5] Name[up to 32] Country_Code[3]\n");
-        char word[256];
-        fgets(word, sizeof(word), stdin);
-        char *words = strtok(word, " \n");
-        char *sap = words;
-        setbuf(stdout, 0);
-        printf("\nACHTUNG! SAP: %s\n", sap);
-        words = strtok(NULL, " \n");
-        char *name = words;
-        words = strtok(NULL, " \n");
-        char *country_code = words;
+bool runnable(const char *vendorFileName, const char *indexFileName, const char *osFileName) {
+    //open or create database files
+    FILE *vendorFile = NULL, *indexTable = NULL, *osFile = NULL;
+    if (!openFile(vendorFileName, &vendorFile))
+        return false;
+    if (!openFile(indexFileName, &indexTable))
+        return false;
+    if (!openFile(osFileName, &osFile))
+        return false;
 
-        struct Vendor vendor;
-        strcpy(vendor.name, name);
-        strcpy(vendor.countryCode, country_code);
-        strcpy(vendor.SAP, sap);
-        setbuf(stdout, 0);
-        printf("\nVENDOR->SAP: %s", vendor.SAP);
-        setbuf(stdout, 0);
-        printf("\nSAP: %s", sap);
-        DB.addVendor(vendor);
-    } else {
-        setbuf(stdout, 0);
-        printf("In Add function : else");
-    }
+    initializeTable();
+    readTable(&indexTable);
+
+    if (!listen(&vendorFile, &indexTable, &osFile))
+        return false;
+
+    rewrite(vendorFileName, indexFileName, osFileName,
+            &vendorFile, &indexTable, &osFile);
+
+    return true;
 }
 
-void change(char *tag) {
 
-}
-
-void count(char *tag) {
-
-}
-
-void delete(char *tag) {
-
-}
-
-void get(char *tag) {
-    if (strcmp(tag, "vendor") == 0) {
+bool openFile(const char fileName[25], FILE **ptr) {
+    *ptr = fopen(fileName, "r+b");
+    if (*ptr == NULL) {
         setbuf(stdout, 0);
-        printf("SAP[5]\n");
-        char word[256];
-        fgets(word, sizeof(word), stdin);
-        char *words = strtok(word, " \n");
-        char *sap = words;
-        struct Vendor vendor = DB.getVendor(sap);
-        if (strncmp(vendor.SAP, "UNDEF\000", 6) != 0) {
+        printf("File %s does not exist!\n", fileName);
+        setbuf(stdout, 0);
+        printf("Creating new %s file...\n", fileName);
+        *ptr = fopen(fileName, "w+b");
+        if (*ptr == NULL) {
             setbuf(stdout, 0);
-            printf("Name: %s\nCountry Code: %s\n", vendor.name, vendor.countryCode);
+            printf("Creation failed.\n");
+            return false;
         }
-        else {
-            setbuf(stdout, 0);
-            printf("\nAn error occurred\n");
-        }
-    } else {
         setbuf(stdout, 0);
-        printf("\nIn get function : else\n");
+        printf("Created file!\n");
     }
+    return true;
 }
 
-void run() {
-    DB.initFiles("vendor.fl", "os.fl", "index.ind");
-    numberOfEntries = 0;
-    char word[256];
-    char *commands;
-    while (true) {
-        setbuf(stdout, 0);
-        printf("\nWrite command :\n");
-        fgets(word, sizeof(word), stdin);
-        commands = strtok(word, " \n");
-
-        char *command = commands;
-        commands = strtok(NULL, " \n");
-        char *tag = commands;
-
-        //  Add
-        if (strcmp(command, "add") == 0)
-            add(tag);
-            //  Change
-        else if (strcmp(command, "change") == 0)
-            change(tag);
-            //  Count
-        else if (strcmp(command, "count") == 0)
-            count(tag);
-            //  Delete
-        else if (strcmp(command, "delete") == 0)
-            delete(tag);
-            //  Get
-        else if (strcmp(command, "get") == 0)
-            get(tag);
-            //  Unknown tag
-        else {
-            setbuf(stdout, 0);
-            printf("\nError! Unknown tag!\n");
+bool listen(FILE **vendorFile, FILE **indexFile, FILE **osFile) {
+    setbuf(stdout, 0);
+    printf("Waiting for command:\n");
+    char buffer[100];
+    while (gets(buffer)) {
+        char *ptr = strtok(buffer, " ");
+        if (ptr == NULL)
+            continue;
+        else if (strcmp(ptr, "end") == 0)
             break;
+        else if (strcmp(ptr, "-add-v") == 0) {
+            ptr = strtok(NULL, " ");
+            if (insertVendor(ptr, vendorFile))
+                continue;
+            else
+                printf("Error!");
+        } else if (strcmp(ptr, "-add-o") == 0) {
+            ptr = strtok(NULL, " ");
+            if (insertOs(ptr, vendorFile, osFile))
+                continue;
+            else
+                printf("Error!");
+        } else if (strcmp(ptr, "-get-v") == 0) {
+            ptr = strtok(NULL, " ");
+            getVendor(ptr, vendorFile);
+            continue;
+        } else if (strcmp(ptr, "-get-o") == 0) {
+            ptr = strtok(NULL, " ");
+            getOs(ptr, vendorFile, osFile);
+            continue;
+        } else if (strcmp(ptr, "-rmi-v") == 0) {
+            ptr = strtok(NULL, " ");
+            if (removeVendor(ptr, vendorFile, osFile))
+                continue;
+            else
+                printf("Wrong command!");
+        } else if (strcmp(ptr, "-rmi-o") == 0) {
+            ptr = strtok(NULL, " ");
+            if (removeOs(ptr, vendorFile, osFile))
+                continue;
+            else
+                printf("Wrong command!");
+        } else if (strcmp(ptr, "-update-v") == 0) {
+            ptr = strtok(NULL, " ");
+            if (updateVendor(ptr, vendorFile))
+                continue;
+            else
+                printf("Wrong command!");
+        } else if (strcmp(ptr, "-update-o") == 0) {
+            ptr = strtok(NULL, " ");
+            if (updateOs(ptr, vendorFile, osFile))
+                continue;
+            else
+                printf("Error!");
+        } else if (strcmp(ptr, "-count-v") == 0) {
+            ptr = strtok(NULL, " ");
+            setbuf(stdout, 0);
+            printf("Number of cells in vendor file: %i", countVendor(ptr, vendorFile));
+            continue;
+        } else if (strcmp(ptr, "-count-o") == 0) {
+            ptr = strtok(NULL, " ");
+            printf("Number of cells for user in os file: %i", countOs(ptr, osFile));
+            continue;
+        } else if (strcmp(ptr, "-count-all") == 0) {
+            ptr = strtok(NULL, " ");
+            printf("Number of cells in os file: %i", countAllOs(ptr, osFile));
+            continue;
+        } else {
+            setbuf(stdout, 0);
+            printf("Wrong command!\n");
+            continue;
         }
     }
-    DB.end();
+    return true;
 }
 
-const struct app App = {
-        .add = add,
-        .change = change,
-        .count = count,
-        .delete = delete,
-        .run = run,
-        .get = get
-};
+void rewrite(const char vendorFileName[25], const char indexFileName[25], const char osFileName[25],
+             FILE **vendorFile, FILE **indexFile, FILE **osFile) {
+    writeTable(indexFile, indexFileName);
+    fclose(*vendorFile);
+    fclose(*indexFile);
+    fclose(*osFile);
+}

@@ -1,39 +1,26 @@
 #ifndef PART_3_DATABASE_H
 #define PART_3_DATABASE_H
 
-#include <stdio.h>
 #include "tables.h"
+#include <stdio.h>
+#include <stdbool.h>
+#include <string.h>
+#include "stdlib.h"
 
-#define MAX_NUMBER_OF_ENTRIES 30
+unsigned int countVendor(char *ptr, FILE **vendorFile);
+unsigned int countOs(char *ptr, FILE **osFile);
+unsigned int countAllOs(char *ptr, FILE **osFile);
 
-FILE *vendorFile;
-FILE *osFile;
-FILE *indexFile;
+bool removeVendor(char *ptr, FILE **vendorFile, FILE **osFile);
+bool removeOs(char *ptr, FILE **vendorFile, FILE **osFile);
 
-long long numberOfEntries;
-struct Index indexes[MAX_NUMBER_OF_ENTRIES];
+int getVendor(char *ptr, FILE **vendorFile);
+int getOs(char *ptr, FILE **vendorFile, FILE **osFile);
 
-struct db {
-    bool (*addVendor)(struct Vendor vendor);
-    bool (*addOs)(struct Os os);
-    struct Vendor (*getVendor)(char key[6]);   //  Key - SAP code
-    void (*getOs)(char key[9], struct Os* os);           //  Key - baseband version
-    int (*getAllOs)(char key[6], struct Os os[]);       //  Key - linked vendor's SAP
-    void (*removeVendor)(char key[6]);          //  Key - SAP code
-    void (*removeOs)(char key[9]);              //  Key - baseband version
-    void (*updateVendor)(char key[6]);          //  Key - SAP code
-    void (*updateOs)(char key[9]);              //  Key - baseband version
+int os_NUMBER;
+bool insertVendor(char *ptr, FILE **vendorFile);
+bool insertOs(char *ptr, FILE **vendorFile, FILE **osFile);
 
-    void (*initFiles)(
-            const char vendorFileName[],
-            const char osFileName[],
-            const char indexFileName[]
-    );
-
-    void (*normalize)();
-    void (*end)();
-};
-
-extern const struct db DB;
-
+bool updateVendor(char *ptr, FILE **vendorFile);
+bool updateOs(char *ptr, FILE **vendorFile, FILE** osFile);
 #endif //PART_3_DATABASE_H
