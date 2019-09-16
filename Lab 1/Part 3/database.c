@@ -155,7 +155,7 @@ void initFields(
 }
 
 struct Vendor getVendor(char *key) {
-    DB.normalize();
+    DB.normalize("vendor.fl", "os.fl", "index.ind");
     for (int i = 0; i < numberOfEntries; i++) {
         if (strcmp(indexes[i].SAP, key) == 0) {
             fseek(vendorFile, indexes[i].index, SEEK_SET);
@@ -317,6 +317,7 @@ void normalizeVendor(const char *vendorFileName) {
     for (long long i = 0; i < totalVendors; i++)
         writeVendorCell(vendorFile, vendorArray[i]);
     fclose(vendorFile);
+    vendorFile = fopen(vendorFileName, "r+b");
 }
 
 static int compareOs(const void *a, const void *b) {
@@ -358,6 +359,7 @@ void normalizeOs(const char *osFileName) {
         writeOsCell(osFile, osArray[i]);
     }
     fclose(osFile);
+    osFile = fopen(osFileName, "r+b");
 }
 
 void normalizeIndex(const char *index_file_name) {
@@ -367,6 +369,7 @@ void normalizeIndex(const char *index_file_name) {
         writeIndex(indexFile, indexes[i]);
     }
     fclose(indexFile);
+    indexFile = fopen(index_file_name, "r+b");
 }
 
 //  Clears all unused fields and rewrites files.
