@@ -1,4 +1,4 @@
-#include "structures.h"
+#include "tables.h"
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -10,17 +10,10 @@ bool sorted;
 void initializeTable();
 
 void readTable(FILE **indexFile);
-
-void writeTable(FILE **indexFile, const char indexTableFName[25]);
-
+void writeTable(FILE **indexFile, const char indexFileName[25]);
 void deleteTable();
-
-int searchTable(unsigned long id);
-
+int searchTable(unsigned long SAP);
 void sortTable();
-
-void add(unsigned long id, unsigned int index);
-
-void del(unsigned long id);
-
-int comp(const void *elem1, const void *elem2);
+void addIndex(unsigned long SAP, unsigned int index);
+void removeIndex(unsigned long SAP);
+int compare(const void *a, const void *b);

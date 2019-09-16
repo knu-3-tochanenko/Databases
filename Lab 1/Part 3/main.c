@@ -1,14 +1,14 @@
 #include <stdio.h>
-#include "run.h"
+#include "application.h"
 
 int main() {
 
-    const char contributorFName[25] = "Contributor.fl";
-    const char contributorIndexTable[25] = "Contributor.ind";
-    const char imageFName[25] = "Image.fl";
+    const char vendorFName[25] = "Vendor.fl";
+    const char vendorIndexTable[25] = "Vendor.ind";
+    const char osFName[25] = "Os.fl";
 
 
-    bool success = function(contributorFName, contributorIndexTable, imageFName);
+    bool success = runnable(vendorFName, vendorIndexTable, osFName);
     if (success) {
         setbuf(stdout, 0);
         printf("Success!\n");
