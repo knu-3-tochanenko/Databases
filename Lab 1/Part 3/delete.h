@@ -9,6 +9,6 @@
 #include <stdlib.h>
 
 
-bool del_m(char *ptr, FILE **masterFile);
+bool del_m(char *ptr, FILE **masterFile,FILE **slaveFile);
 
 bool del_s(char *ptr, FILE **masterFile, FILE **slaveFile);

@@ -3,9 +3,9 @@
 
 int main() {
 
-    const char contributorFName[25] = "Vendor.fl";
-    const char contributorIndexTable[25] = "Vendor.ind";
-    const char imageFName[25] = "Os.fl";
+    const char contributorFName[25] = "Contributor.fl";
+    const char contributorIndexTable[25] = "Contributor.ind";
+    const char imageFName[25] = "Image.fl";
 
 
     bool success = function(contributorFName, contributorIndexTable, imageFName);

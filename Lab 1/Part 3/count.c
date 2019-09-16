@@ -7,9 +7,9 @@ unsigned int count_m(char *ptr, FILE **masterFile) {
         return false;
     }
     unsigned int status = 0, i = 0;
-    struct Vendor *contributor = malloc(sizeof(struct Vendor));
+    struct Contributor *contributor = malloc(sizeof(struct Contributor));
     fseek(*masterFile, 0, SEEK_SET);
-    while (fread(contributor, sizeof(struct Vendor), 1, *masterFile)) {
+    while (fread(contributor, sizeof(struct Contributor), 1, *masterFile)) {
         fread(&status, sizeof(int), 1, *masterFile);
         if (status == 1) {
             i++;
@@ -31,13 +31,13 @@ unsigned int count_s(char *ptr, FILE **slaveFile) {
         return false;
     }
 
-    struct Os *image = malloc(sizeof(struct Os));
+    struct Image *image = malloc(sizeof(struct Image));
 
     unsigned int status = 0, i = 0;
     fseek(*slaveFile, 0, SEEK_SET);
-    while (fread(image, sizeof(struct Os), 1, *slaveFile)) {
+    while (fread(image, sizeof(struct Image), 1, *slaveFile)) {
         fread(&status, sizeof(int), 1, *slaveFile);
-        if (status == 1 && image->SAP == contributorID)
+        if (status == 1 && image->contributorID == contributorID)
             i++;
     }
     return i;
@@ -49,10 +49,10 @@ unsigned int count_all(char *ptr, FILE **slaveFile) {
         printf("Wrong command.");
         return false;
     }
-    struct Os *image = malloc(sizeof(struct Os));
+    struct Image *image = malloc(sizeof(struct Image));
     unsigned int status = 0, i = 0;
     fseek(*slaveFile, 0, SEEK_SET);
-    while (fread(image, sizeof(struct Os), 1, *slaveFile)) {
+    while (fread(image, sizeof(struct Image), 1, *slaveFile)) {
         fread(&status, sizeof(int), 1, *slaveFile);
         if (status == 1)
             i++;

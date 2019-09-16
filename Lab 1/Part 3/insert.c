@@ -2,49 +2,48 @@
 
 int IMAGE_NUMBER = -1;
 
-bool addVendor(char *ptr, FILE **vendorFile) {
+bool insert_m(char *ptr, FILE **masterFile) {
     if (ptr != NULL) {
         setbuf(stdout, 0);
         printf("Wrong command.");
         return false;
     }
 
-    char vendorSAP[21];
-    unsigned long SAP = 0;
+    char userID[21];
+    unsigned long id = 0;
     setbuf(stdout, 0);
-    printf("\nEnter Vendor SAP:");
-    scanf("%s", vendorSAP);
-    SAP = strtol(vendorSAP, NULL, 10);
+    printf("\nEnter Contributor User ID:");
+    scanf("%s", userID);
+    id = strtol(userID, NULL, 10);
 
-    if (getVendorSAP(SAP, vendorFile) != -1) {
+    if (getContributorIndex(id, masterFile) != -1) {
         setbuf(stdout, 0);
-        printf("Vendor with given SAP already exists");
-        return addVendor(ptr, vendorFile);
+        printf("ID exists. Try to enter another one");
+        return insert_m(ptr, masterFile);
     } else {
-        struct Vendor *vendor = readVendor();
-        vendor->SAP = SAP;
+        struct Contributor *contributor = readContributor();
+        contributor->userID = id;
+        contributor->firstImage = -1;
 
-        fseek(*vendorFile, 0, SEEK_END);
-        long index = ftell(*vendorFile) / (sizeof(struct Vendor) + sizeof(int));
-        writeVendorToFile(vendor, vendorFile);
-        add(SAP, index);
-        free(vendor);
+        fseek(*masterFile, 0, SEEK_END);
+        long index = ftell(*masterFile) / (sizeof(struct Contributor) + sizeof(int));
+        writeContributor(contributor, masterFile);
+        add(id, index);
+        free(contributor);
         return true;
     }
 
 }
 
 
-bool addOs(char *ptr, FILE **vendorFile, FILE **osFile) {
-    unsigned long vendorSAP = 0;
+bool insert_s(char *ptr, FILE **masterFile, FILE **slaveFile) {
+    unsigned long contributorID = 0;
     char *tmp = ptr;
 
     if (ptr != NULL) {
         char *pEnd;
-        vendorSAP = strtol(ptr, &pEnd, 10);
+        contributorID = strtol(ptr, &pEnd, 10);
         ptr = strtok(NULL, " ");
-        setbuf(stdout, 0);
-        printf("%ld", vendorSAP);
         if (ptr != NULL)
             return false;
     } else {
@@ -52,35 +51,35 @@ bool addOs(char *ptr, FILE **vendorFile, FILE **osFile) {
     }
 
     int index = 0, imageIndex = -1;
-    if ((index = getVendorSAP(vendorSAP, vendorFile)) == -1) {
+    if ((index = getContributorIndex(contributorID, masterFile)) == -1) {
         setbuf(stdout, 0);
-        printf("Vendor does not exist.");
+        printf("ID not exists. ");
         return false;
     } else {
 
-        char SAP[21];
+        char userID[21];
         unsigned long id = 0;
 
         setbuf(stdout, 0);
-        printf("\nEnter Os ID:");
-        scanf("%s", SAP);
-        id = strtol(SAP, NULL, 10);
+        printf("\nEnter Image ID:");
+        scanf("%s", userID);
+        id = strtol(userID, NULL, 10);
 
-        if (getOsVersion(id, osFile) != -1) {
+        if (getImageID(id, slaveFile) != -1) {
             setbuf(stdout, 0);
             printf("ID exists. Try to enter another one");
-            return addOs(tmp, vendorFile, osFile);
+            return insert_s(tmp, masterFile, slaveFile);
         } else {
-            struct Os *os = readOs();
-            os->SAP = vendorSAP;
-            os->basebandVersion = id;
+            struct Image *image = readImage();
+            image->contributorID = contributorID;
+            image->imageID = id;
 
-            fseek(*osFile, 0, SEEK_END);
-            long end = ftell(*osFile) / (sizeof(struct Os) + sizeof(int));
-            os->nextIndex = getOsIndex(index, vendorFile);
-            setImageIndex(index, end, vendorFile);
-            writeOsToFile(os, osFile);
-            free(os);
+            fseek(*slaveFile, 0, SEEK_END);
+            long end = ftell(*slaveFile) / (sizeof(struct Image) + sizeof(int));
+            image->nextIndex = getImageIndex(index, masterFile);
+            setImageIndex(index, end, masterFile);
+            writeImage(image, slaveFile);
+            free(image);
             return true;
         }
     }

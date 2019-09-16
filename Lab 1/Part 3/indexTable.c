@@ -12,7 +12,8 @@ void initializeTable() {
 void readTable(FILE **indexFile) {
     unsigned long id = 0;
     unsigned int index = 0, i = 0;
-    while (fread(&id, sizeof(unsigned long), 1, *indexFile) == 1) {
+    while (fread(&id, sizeof(unsigned long), 1, *indexFile)) {
+        printf("i");
         fread(&index, sizeof(unsigned int), 1, *indexFile);
         indexTable[i]->id = id;
         indexTable[i]->index = index;
@@ -42,7 +43,7 @@ int searchTable(unsigned long id) {
     if (TABLE_SIZE == 0)
         return -1;
     sortTable();
-    unsigned int first = 0, last = TABLE_SIZE, mid;
+    unsigned int first = 0, last = TABLE_SIZE - 1, mid;
     bool flag = false;
     while (first <= last) {
         mid = (first + last) / 2;
@@ -56,8 +57,15 @@ int searchTable(unsigned long id) {
                 last = mid - 1;
         }
     }
-    if (flag)
+    if (flag) {
+        printf("%i", indexTable[mid]->index);
+        while (indexTable[mid]->id == indexTable[mid + 1]->id &&
+               indexTable[mid]->index < id < indexTable[mid + 1]->index) {
+            mid++;
+            printf("%i", indexTable[mid]->index);
+        }
         return indexTable[mid]->index;
+    }
     return -1;
 }
 
@@ -76,12 +84,35 @@ void add(unsigned long id, unsigned int index) {
     sorted = false;
 }
 
-int comp(const void *a, const void *b) {
-    struct Cell f = *((struct Cell *) a);
-    if (b == NULL)
+void del(unsigned long id) {
+    if (TABLE_SIZE == 0)
+        return;
+    int index = -1;
+    for (int i = 0; i < TABLE_SIZE; i++) {
+        if (indexTable[i]->id == id) {
+            index = i;
+        }
+    }
+    if (index != -1) {
+        for (int i = index; i < TABLE_SIZE - 1; i++) {
+            indexTable[i] = indexTable[i + 1];
+        }
+        TABLE_SIZE--;
+    }
+}
+
+int comp(const void *elem1, const void *elem2) {
+    struct Cell f = *((struct Cell *) elem1);
+    if (elem2 == NULL)
         return 1;
-    struct Cell s = *((struct Cell *) b);
-    if (f.id > s.id) return 1;
+    struct Cell s = *((struct Cell *) elem2);
+    if (f.id > s.id)
+        return 1;
     if (f.id < s.id) return -1;
+    if (f.id == s.id) {
+        if (f.index > s.index)
+            return 1;
+        return -1;
+    }
     return 0;
 }

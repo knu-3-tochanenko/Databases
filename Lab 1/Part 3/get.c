@@ -1,14 +1,12 @@
 #include "get.h"
 
-int getVendor(char *ptr, FILE **vendorFile) {
+int get_m(char *ptr, FILE **masterFile) {
     long id;
 
     if (ptr != NULL) {
         char *pEnd;
         id = strtol(ptr, &pEnd, 10);
         ptr = strtok(NULL, " ");
-        setbuf(stdout, 0);
-        printf("%ld", id);
         if (ptr != NULL)
             return -1;
     } else {
@@ -16,31 +14,30 @@ int getVendor(char *ptr, FILE **vendorFile) {
     }
 
     int index = 0;
-    if ((index = getVendorSAP(id, vendorFile)) == -1) {
+    if ((index = getContributorIndex(id, masterFile)) == -1) {
         setbuf(stdout, 0);
-        printf("Vendor with given SAP is not available");
+        printf("ID does not exist. Try to enter another one");
         return -1;
     } else {
-        struct Vendor *vendor = malloc(sizeof(struct Vendor));
-        fseek(*vendorFile, sizeof(struct Vendor) * index, SEEK_SET);
-        fread(vendor, sizeof(struct Vendor), 1, *vendorFile);
-        writeVendor(vendor);
-        free(vendor);
+        struct Contributor *contributor = malloc(sizeof(struct Contributor));
+        fseek(*masterFile, (sizeof(struct Contributor) + sizeof(int)) * index, SEEK_SET);
+        fread(contributor, sizeof(struct Contributor), 1, *masterFile);
+        printContributor(contributor);
+        free(contributor);
         return index;
     }
 }
 
-int getOs(char *ptr, FILE **vendorFile, FILE **osFile) {
-    long vendorSAP = 0, osBasebandVersion = 0;
+int get_s(char *ptr, FILE **masterFile, FILE **slaveFile) {
+    long contributorID = 0, imageID = 0;
 
     if (ptr != NULL) {
-        char *pEnd;
-        vendorSAP = strtol(ptr, &pEnd, 10);
+        contributorID = strtol(ptr, NULL, 10);
         ptr = strtok(NULL, " ");
         if (ptr == NULL)
             return -1;
         else {
-            osBasebandVersion = strtol(ptr, &pEnd, 10);
+            imageID = strtol(ptr, NULL, 10);
             ptr = strtok(NULL, " ");
             if (ptr != NULL)
                 return -1;
@@ -50,30 +47,28 @@ int getOs(char *ptr, FILE **vendorFile, FILE **osFile) {
     }
 
     int index = 0;
-    if ((index = getVendorSAP(vendorSAP, vendorFile)) == -1) {
+    if ((index = getContributorIndex(contributorID, masterFile)) == -1) {
         setbuf(stdout, 0);
-        printf("Vendor does not exist.");
+        printf("ID does not exist.");
         return -1;
     } else {
-        int indexElem = getOsIndex(index, vendorFile);
-        printf("%i", indexElem);
-        if (indexElem == -1)
+        int imageIndex = getImageIndex(index, masterFile);
+        if (imageIndex == -1)
             return -1;
-        struct Os *os = malloc(sizeof(struct Os));
-        // TODO What is status?
+        struct Image *image = malloc(sizeof(struct Image));
         unsigned int status = 0;
-        while (indexElem != -1) {
-            fseek(*osFile, sizeof(struct Os) * indexElem, SEEK_SET);
-            fread(os, sizeof(struct Os), 1, *osFile);
-            fread(&status, sizeof(unsigned int), 1, *osFile);
-            if (os->basebandVersion == osBasebandVersion && status == 1) {
-                writeOs(os);
-                free(os);
-                return indexElem;
+        while (imageIndex != -1) {
+            fseek(*slaveFile, (sizeof(struct Image)+sizeof(int)) * imageIndex, SEEK_SET);
+            fread(image, sizeof(struct Image), 1, *slaveFile);
+            fread(&status, sizeof(unsigned int), 1, *slaveFile);
+            if (image->imageID == imageID && status == 1) {
+                printImage(image);
+                free(image);
+                return imageIndex;
             }
-            indexElem = os->nextIndex;
+            imageIndex = image->nextIndex;
         }
-        free(os);
+        free(image);
         return -1;
     }
 }
